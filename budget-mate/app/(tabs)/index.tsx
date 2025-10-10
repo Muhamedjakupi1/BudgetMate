@@ -1,9 +1,10 @@
 import { Text, View } from "react-native";
+import HomePage from "../screens/HomePage";
 
 export default function HomeScreen() {
   return (
     <View>
-      <Text>Test your components here</Text>
+      <HomePage></HomePage>
     </View>
   );
 }
