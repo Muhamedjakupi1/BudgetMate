@@ -12,7 +12,7 @@ export default function HomePage() {
     
     const [ budget, setBudget ] = useState(0);
     const [expenses, setExpenses] = useState<Expenses[]>([
-        { id: "1", title: "Groceries", amount: 50, done: false },
+        { id: "1", title: "Groceries", amount: 60, done: false },
         { id: "2", title: "Internet", amount: 25, done: true },
         { id: "3", title: "Electricity", amount: 40, done: false },
     ]);
@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#f7f7f7",
-        paddingHorizontal: 15,
+        paddingHorizontal: 20,
         paddingTop: 20,
     },
     header: {
@@ -65,7 +65,8 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "center",
         marginBottom: 20,
-        paddingHorizontal: 20
+        paddingHorizontal: 20,
+        paddingTop: 20,
     },
     headerButton: {
         fontSize: 16,
@@ -79,6 +80,8 @@ const styles = StyleSheet.create({
     },
     listContainer: {
         paddingBottom: 20,
+        paddingTop: 10,
+        paddingHorizontal: 10,
     },
     expenseItem: {
         backgroundColor: "#fff",
@@ -88,10 +91,13 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
+        // iOS 
         shadowColor: "#000",
-        shadowOpacity: 0.1,
+        shadowOffset: { width: 1, height:  7},
+        shadowOpacity: 0.25,
         shadowRadius: 5,
-        elevation: 3,
+        // Android 
+        elevation: 5,
     },
     expenseTitle: {
         fontSize: 16,

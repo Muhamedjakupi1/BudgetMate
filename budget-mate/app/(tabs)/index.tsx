@@ -1,11 +1,11 @@
-import { Text, View } from "react-native";
+import { SafeAreaView, Text, View } from "react-native";
 import HomePage from "../screens/HomePage";
 
 export default function HomeScreen() {
   return (
-    <View>
+    <SafeAreaView style={{flex: 1}}>
       <HomePage></HomePage>
-    </View>
+    </SafeAreaView>
   );
 }
 
