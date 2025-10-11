@@ -17,6 +17,10 @@ export default function HomePage() {
         { id: "3", title: "Electricity", amount: 40, done: false },
     ]);
 
+    const deleteExpense = (id: string) => {
+        setExpenses(expenses.filter((expense) => expense.id !== id))
+    }
+
     const renderExpense = ({ item }: { item: Expenses }) => (
         <View style={styles.expenseItem}>
             <View>
@@ -27,7 +31,8 @@ export default function HomePage() {
                 <TouchableOpacity style={[styles.btn, {backgroundColor: "#007BFF"}]}>
                     <Text style={{ color: "white" }}>Edit</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.btn, {backgroundColor: "#FF3B30"}]}>
+                <TouchableOpacity style={[styles.btn, {backgroundColor: "#FF3B30"}]}
+                onPress={() => deleteExpense(item.id)}>
                     <Text style={{ color: "white" }}>Delete</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.btn, {backgroundColor: "#34C759"}]}>
@@ -40,7 +45,7 @@ export default function HomePage() {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.budgetText}>💰 Budget: ${budget}</Text>
+                <Text style={styles.budgetText}>💵 Budget: ${budget}</Text>
                 <TouchableOpacity><Text style={styles.headerButton}>👤 Profile</Text></TouchableOpacity>
             </View>
             <FlatList
@@ -114,8 +119,8 @@ const styles = StyleSheet.create({
     },
     btn: {
         backgroundColor: "#eee",
-        paddingHorizontal: 8,
-        paddingVertical: 5,
+        paddingHorizontal: 15,
+        paddingVertical: 10,
         borderRadius: 5,
     },
 });
