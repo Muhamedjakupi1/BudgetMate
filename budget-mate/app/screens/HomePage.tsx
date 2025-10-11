@@ -1,5 +1,6 @@
 import { FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { useState } from "react";
+import React, { useState } from "react";
+import ExpensesHistoryPage from "./ExpensesHistoryPage";
 
 type Expenses = {
     id: string;
@@ -8,14 +9,27 @@ type Expenses = {
     done: boolean;
 }
 
-export default function HomePage() {
-    
+export default function HomePage({ navigation } : any) {
+
+    const [doneExpensesHistory, setDoneExpensesHistory] = useState<Expenses[]>([]);
     const [ budget, setBudget ] = useState(0);
     const [expenses, setExpenses] = useState<Expenses[]>([
         { id: "1", title: "Groceries", amount: 60, done: false },
         { id: "2", title: "Internet", amount: 25, done: true },
         { id: "3", title: "Electricity", amount: 40, done: false },
     ]);
+
+    const handleDone = (id: string) => {
+    const doneExpense = expenses.find(exp => exp.id ==id);
+    if(!doneExpense) return;
+
+    setDoneExpensesHistory(prev => [...prev, doneExpense])
+
+    navigation.navigate('ExpensesHistory', {
+        doneExpenses: [...doneExpensesHistory, doneExpense]
+    });
+        
+    }
 
     const deleteExpense = (id: string) => {
         setExpenses(expenses.filter((expense) => expense.id !== id))
@@ -35,8 +49,9 @@ export default function HomePage() {
                 onPress={() => deleteExpense(item.id)}>
                     <Text style={{ color: "white" }}>Delete</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.btn, {backgroundColor: "#34C759"}]}>
-                    <Text style={{ color: "white" }}>Done</Text>
+               <TouchableOpacity style={[styles.btn, { backgroundColor: "#34C759" }]}
+                onPress={() => handleDone(item.id)}
+>                   <Text style={{ color: "white" }}>Done</Text>
                 </TouchableOpacity>
             </View>
         </View>
