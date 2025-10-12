@@ -1,6 +1,5 @@
 import { FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React, { useState } from "react";
-import ExpensesHistoryPage from "./ExpensesHistoryPage";
 
 type Expenses = {
     id: string;
@@ -36,6 +35,10 @@ export default function HomePage({ navigation } : any) {
         setExpenses(expenses.filter((expense) => expense.id !== id))
     }
 
+    const handleProfile = () => {
+        navigation.navigate('Profile')
+    }
+
     const renderExpense = ({ item }: { item: Expenses }) => (
         <View style={styles.expenseItem}>
             <View>
@@ -58,11 +61,12 @@ export default function HomePage({ navigation } : any) {
         </View>
     );
 
+
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
                 <Text style={styles.budgetText}>💵 Budget: ${budget}</Text>
-                <TouchableOpacity><Text style={styles.headerButton}>👤 Profile</Text></TouchableOpacity>
+                <TouchableOpacity onPress={() => handleProfile()}><Text style={styles.headerButton}>👤 Profile</Text></TouchableOpacity>
             </View>
             <FlatList
                 data={expenses}
