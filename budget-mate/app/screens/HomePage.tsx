@@ -23,7 +23,8 @@ export default function HomePage({ navigation } : any) {
     const doneExpense = expenses.find(exp => exp.id ==id);
     if(!doneExpense) return;
 
-    setDoneExpensesHistory(prev => [...prev, doneExpense])
+    setDoneExpensesHistory(prev => [...prev, doneExpense]);
+    setExpenses(prev => prev.filter(exp => exp.id !== id));
 
     navigation.navigate('ExpensesHistory', {
         doneExpenses: [...doneExpensesHistory, doneExpense]
