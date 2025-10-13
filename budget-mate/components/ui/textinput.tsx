@@ -24,6 +24,7 @@ const FormInput: React.FC<TextInputProps> = ({
       keyboardType={keyboardType}
       editable={editable}
       style={styles.input}
+      placeholderTextColor="#666" 
     />
   );
 };
