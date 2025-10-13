@@ -29,10 +29,6 @@ export default function HomePage({ navigation } : any) {
         setExpenses(expenses.filter((expense) => expense.id !== id))
     }
 
-    const handleProfile = () => {
-        navigation.navigate('Profile')
-    }
-
     const renderExpense = ({ item }: { item: Expenses }) => (
         <View style={styles.expenseItem}>
             <View>
@@ -60,12 +56,12 @@ export default function HomePage({ navigation } : any) {
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
                 <Text style={styles.budgetText}>💵 Budget: ${budget}</Text>
-                <TouchableOpacity onPress={() => handleProfile()}><Text style={styles.headerButton}>👤 Profile</Text></TouchableOpacity>
             </View>
+
             <FlatList
                 data={expenses}
                 keyExtractor={(item) => item.id}
-                renderItem={({ item} ) => renderExpense({item})}
+                renderItem={({ item }) => renderExpense({ item })}
                 contentContainerStyle={styles.listContainer}
             />
         </SafeAreaView>
@@ -81,9 +77,9 @@ const styles = StyleSheet.create({
     },
     header: {
         flexDirection: "row",
-        justifyContent: "space-between",
+        justifyContent: "center",
         alignItems: "center",
-        marginBottom: 20,
+        marginBottom: 30,
         paddingHorizontal: 20,
         paddingTop: 20,
     },
