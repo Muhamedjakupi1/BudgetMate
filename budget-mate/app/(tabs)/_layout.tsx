@@ -26,7 +26,7 @@ export default function TabLayout() {
 
       {/* Transactions */}
       <Tabs.Screen
-        name="transaction"
+        name="transaction" 
         options={{
           title: 'Transaction',
           tabBarIcon: () => <Text style={{ fontSize: 24 }}>➕</Text>,
@@ -35,7 +35,7 @@ export default function TabLayout() {
 
       {/* Expenses History */}
       <Tabs.Screen
-        name="expensesHistory"
+        name="expensesHistory" 
         options={{
           title: 'Expenses',
           tabBarIcon: () => <Text style={{ fontSize: 24 }}>📄</Text>,
@@ -44,7 +44,7 @@ export default function TabLayout() {
 
       {/* Profile */}
       <Tabs.Screen
-        name="profile"
+        name="profile" 
         options={{
           title: 'Profile',
           tabBarIcon: () => <Text style={{ fontSize: 24 }}>👤</Text>,
