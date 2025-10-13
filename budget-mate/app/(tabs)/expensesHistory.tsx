@@ -28,7 +28,7 @@ export default function ExpensesHistory() {
           data={data}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <View style={styles.item}>
+            <View style={styles.expenseItem}>
               <Text>{item.title}</Text>
               <Text>${item.amount}</Text>
             </View>
@@ -52,10 +52,28 @@ const styles = StyleSheet.create({
         paddingTop: 20,
     },
   title: { 
-    fontSize: 22, 
+    fontSize: 18, 
     fontWeight: "bold", 
-    marginBottom: 20 
+    textAlign: "center",
+    marginBottom: 20, 
+    marginTop: 20
   },
+ expenseItem: {
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    // iOS 
+    shadowColor: "#000",
+    shadowOffset: { width: 1, height:  7},
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    // Android 
+    elevation: 5,
+    },
   item: { 
     flexDirection: "row", 
     justifyContent: "space-between", 
@@ -70,6 +88,13 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: "#6DB993",
     marginBottom: 10,
-    borderRadius: 8
+    borderRadius: 8,
+    // iOS 
+    shadowColor: "#000",
+    shadowOffset: { width: 1, height:  7},
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    // Android 
+    elevation: 5,
   }
 });
