@@ -1,6 +1,7 @@
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context'
 import React, { useState } from "react";
+import {  addDoneExpense } from "../sharedData";
 
 type Expenses = {
     id: string;
@@ -11,13 +12,18 @@ type Expenses = {
 
 export default function HomePage({ navigation } : any) {
 
-    const [doneExpensesHistory, setDoneExpensesHistory] = useState<Expenses[]>([]);
+    const [doneExpenses, setDoneExpenses] = useState<Expenses[]>([]);
     const [ budget, setBudget ] = useState(0);
     const [expenses, setExpenses] = useState<Expenses[]>([
         { id: "1", title: "Groceries", amount: 60, done: false },
         { id: "2", title: "Internet", amount: 25, done: true },
         { id: "3", title: "Electricity", amount: 40, done: false },
     ]);
+
+    const handleDone = (item: any) => {
+        addDoneExpense(item);
+        setExpenses(expenses.filter((e)=>e.id !== item.id))
+ }
 
     const deleteExpense = (id: string) => {
         setExpenses(expenses.filter((expense) => expense.id !== id))
@@ -41,7 +47,8 @@ export default function HomePage({ navigation } : any) {
                 onPress={() => deleteExpense(item.id)}>
                     <Text style={{ color: "white" }}>Delete</Text>
                 </TouchableOpacity>
-               <TouchableOpacity style={[styles.btn, { backgroundColor: "#34C759" }]}>
+               <TouchableOpacity style={[styles.btn, { backgroundColor: "#34C759" }]}
+               onPress={()=> handleDone(item)}>
                 <Text style={{ color: "white" }}>Done</Text>
                 </TouchableOpacity>
             </View>
