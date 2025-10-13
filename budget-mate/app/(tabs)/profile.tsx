@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import React from 'react'
-import { Link } from 'expo-router';
+import { router } from 'expo-router';
 
 const Profile = () => {
     const user = {
@@ -12,6 +12,10 @@ const Profile = () => {
         totalSpent: 275,
         totalDoneExpenses: 5,
     };
+    const handleLogout = () => {
+  router.replace("/(auth)"); // navigates to auth/index and removes history
+};
+
   return (
     <SafeAreaView style={styles.container}>
         <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -35,7 +39,7 @@ const Profile = () => {
             <TouchableOpacity style={styles.button}>
                 <Text style={styles.buttonText}>Edit Profile</Text>
                 </TouchableOpacity>
-            <TouchableOpacity style={[styles.button,{backgroundColor: '#FF3B30'}]}>
+            <TouchableOpacity style={[styles.button,{backgroundColor: '#FF3B30'}]} onPress={handleLogout}>
                 <Text style={styles.buttonText}>Logout</Text>
                 </TouchableOpacity>
         </ScrollView>
