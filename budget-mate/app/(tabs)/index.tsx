@@ -10,7 +10,7 @@ type Expenses = {
     done: boolean;
 }
 
-export default function HomePage({ navigation } : any) {
+export default function HomePage() {
 
     const [doneExpenses, setDoneExpenses] = useState<Expenses[]>([]);
     const [ budget, setBudget ] = useState(0);
