@@ -19,19 +19,6 @@ export default function HomePage({ navigation } : any) {
         { id: "3", title: "Electricity", amount: 40, done: false },
     ]);
 
-    const handleDone = (id: string) => {
-    const doneExpense = expenses.find(exp => exp.id ==id);
-    if(!doneExpense) return;
-
-    setDoneExpensesHistory(prev => [...prev, doneExpense]);
-    setExpenses(prev => prev.filter(exp => exp.id !== id));
-
-    navigation.navigate('ExpensesHistory', {
-        doneExpenses: [...doneExpensesHistory, doneExpense]
-    });
-        
-    }
-
     const deleteExpense = (id: string) => {
         setExpenses(expenses.filter((expense) => expense.id !== id))
     }
@@ -54,8 +41,7 @@ export default function HomePage({ navigation } : any) {
                 onPress={() => deleteExpense(item.id)}>
                     <Text style={{ color: "white" }}>Delete</Text>
                 </TouchableOpacity>
-               <TouchableOpacity style={[styles.btn, { backgroundColor: "#34C759" }]}
-                onPress={() => handleDone(item.id)}>
+               <TouchableOpacity style={[styles.btn, { backgroundColor: "#34C759" }]}>
                 <Text style={{ color: "white" }}>Done</Text>
                 </TouchableOpacity>
             </View>
