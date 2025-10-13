@@ -1,20 +1,24 @@
-import React from "react";
-import { View, Text, FlatList, StyleSheet } from "react-native";
-
-const doneExpenses = [
-  { id: "1", title: "Internet", amount: 25 },
-  { id: "2", title: "Groceries", amount: 60 },
-];
+import React, {useState, useEffect, useCallback} from "react";
+import { View,  Text, FlatList, StyleSheet } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { doneExpenses } from "../sharedData";
+import { useFocusEffect } from "expo-router";
 
 export default function ExpensesHistory() {
+ const[data, setData] = useState(doneExpenses);
+ useFocusEffect(
+  useCallback(()=>{
+  setData([...doneExpenses]);}, []
+ )
+);
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Text style={styles.title}>✅ Expenses History</Text>
-      {doneExpenses.length === 0 ? (
+      {data.length === 0 ? (
         <Text>No expenses done yet</Text>
       ) : (
         <FlatList
-          data={doneExpenses}
+          data={data}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <View style={styles.item}>
@@ -24,16 +28,17 @@ export default function ExpensesHistory() {
           )}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    padding: 20, 
-    backgroundColor: "#f7f7f7" 
-  },
+  container: {
+        flex: 1,
+        backgroundColor: "#f7f7f7",
+        paddingHorizontal: 20,
+        paddingTop: 20,
+    },
   title: { 
     fontSize: 22, 
     fontWeight: "bold", 
