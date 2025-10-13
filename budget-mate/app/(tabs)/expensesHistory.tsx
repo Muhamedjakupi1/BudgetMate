@@ -6,9 +6,16 @@ import { useFocusEffect } from "expo-router";
 
 export default function ExpensesHistory() {
  const[data, setData] = useState(doneExpenses);
+ const[total, setTotal] = useState(0);
  useFocusEffect(
   useCallback(()=>{
-  setData([...doneExpenses]);}, []
+  setData([...doneExpenses]);
+
+  const totalAmount = doneExpenses.reduce(
+    (sum, expense) => sum + Number(expense.amount), 0
+  );
+  setTotal(totalAmount)
+}, []
  )
 );
   return (
@@ -27,7 +34,11 @@ export default function ExpensesHistory() {
             </View>
           )}
         />
-      )}
+       )}
+      <View style={styles.total}>
+        <Text>Total spent:</Text>
+        <Text>${total}</Text>
+       </View>
     </SafeAreaView>
   );
 }
@@ -52,4 +63,12 @@ const styles = StyleSheet.create({
     marginBottom: 10, 
     borderRadius: 8 
   },
+  total: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    padding: 10,
+    backgroundColor: "#6DB993",
+    marginBottom: 10,
+    borderRadius: 8
+  }
 });
