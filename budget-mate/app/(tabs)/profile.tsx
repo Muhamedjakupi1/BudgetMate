@@ -13,12 +13,12 @@ const Profile = () => {
         totalDoneExpenses: 5,
     };
     const handleLogout = () => {
-  router.replace("/(auth)"); // navigates to auth/index and removes history
+  router.replace("./(auth)"); // navigates to auth/index and removes history
 };
 
   return (
     <SafeAreaView style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.sContainer}>
             <View style={styles.profileHeader}>
                 <Image source={user.profilePic} style={styles.profileImage}></Image>
                     <Text style={styles.userName}>{user.name}</Text>
@@ -42,7 +42,7 @@ const Profile = () => {
             <TouchableOpacity style={[styles.button,{backgroundColor: '#FF3B30'}]} onPress={handleLogout}>
                 <Text style={styles.buttonText}>Logout</Text>
                 </TouchableOpacity>
-        </ScrollView>
+        </View>
     </SafeAreaView>
   )
 }
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#f7f7f7'
     },
-    scrollContainer: {
+    sContainer: {
     padding: 20,
     alignItems: 'center',
   },
