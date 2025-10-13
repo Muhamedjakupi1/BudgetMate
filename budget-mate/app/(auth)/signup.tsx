@@ -60,7 +60,6 @@ export default function Signup() {
 
   router.replace("/(tabs)"); 
 
-  // Reset form if needed
   setFullName("");
   setEmail("");
   setPassword("");
