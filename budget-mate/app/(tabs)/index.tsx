@@ -55,8 +55,8 @@ export default function HomePage({ navigation } : any) {
                     <Text style={{ color: "white" }}>Delete</Text>
                 </TouchableOpacity>
                <TouchableOpacity style={[styles.btn, { backgroundColor: "#34C759" }]}
-                onPress={() => handleDone(item.id)}
->                   <Text style={{ color: "white" }}>Done</Text>
+                onPress={() => handleDone(item.id)}>
+                <Text style={{ color: "white" }}>Done</Text>
                 </TouchableOpacity>
             </View>
         </View>
