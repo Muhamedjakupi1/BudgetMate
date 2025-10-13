@@ -13,7 +13,7 @@ const Profile = () => {
         totalDoneExpenses: 5,
     };
     const handleLogout = () => {
-  router.replace("./(auth)"); // navigates to auth/index and removes history
+  router.replace(".././(auth)"); // navigates to auth/index and removes history
 };
 
   return (
