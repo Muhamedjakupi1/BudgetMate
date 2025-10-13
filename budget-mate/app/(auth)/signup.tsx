@@ -8,10 +8,9 @@ import {
   ScrollView,
   Alert,
   Switch,
+  FlatList,
 } from "react-native";
-import { Picker } from "@react-native-picker/picker";
-import { useRouter } from 'expo-router';
-
+import { useRouter } from "expo-router";
 
 type Errors = {
   fullName?: string;
@@ -30,11 +29,20 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [income, setIncome] = useState("");
   const [currency, setCurrency] = useState("USD");
+  const [showCurrencyList, setShowCurrencyList] = useState(false);
   const [savingsGoal, setSavingsGoal] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
 
   const router = useRouter();
+
+  const currencies = [
+    { label: "USD - $", value: "USD" },
+    { label: "EUR - €", value: "EUR" },
+    { label: "GBP - £", value: "GBP" },
+    { label: "JPY - ¥", value: "JPY" },
+    { label: "AUD - $", value: "AUD" },
+  ];
 
   const validate = () => {
     const newErrors: Errors = {};
@@ -42,9 +50,12 @@ export default function Signup() {
     if (!email) newErrors.email = "Email is required";
     else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = "Email is invalid";
     if (!password) newErrors.password = "Password is required";
-    else if (password.length < 6) newErrors.password = "Password must be at least 6 characters";
-    if (password !== confirmPassword) newErrors.confirmPassword = "Passwords do not match";
-    if (!income || isNaN(Number(income)) || Number(income) <= 0) newErrors.income = "Valid monthly income is required";
+    else if (password.length < 6)
+      newErrors.password = "Password must be at least 6 characters";
+    if (password !== confirmPassword)
+      newErrors.confirmPassword = "Passwords do not match";
+    if (!income || isNaN(Number(income)) || Number(income) <= 0)
+      newErrors.income = "Valid monthly income is required";
     if (!currency) newErrors.currency = "Currency is required";
     if (!termsAccepted) newErrors.terms = "You must accept the terms";
 
@@ -53,22 +64,21 @@ export default function Signup() {
   };
 
   const handleSignup = () => {
-  if (!validate()) return;
+    if (!validate()) return;
 
+    Alert.alert("Success", `Account created for ${fullName}!`);
+    router.replace("/(tabs)");
 
-  Alert.alert("Success", `Account created for ${fullName}!`);
-
-  router.replace("/(tabs)"); 
-
-  setFullName("");
-  setEmail("");
-  setPassword("");
-  setConfirmPassword("");
-  setIncome("");
-  setCurrency("USD");
-  setSavingsGoal("");
-  setTermsAccepted(false);
-};
+    // reset
+    setFullName("");
+    setEmail("");
+    setPassword("");
+    setConfirmPassword("");
+    setIncome("");
+    setCurrency("USD");
+    setSavingsGoal("");
+    setTermsAccepted(false);
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -111,7 +121,9 @@ export default function Signup() {
         secureTextEntry
         style={[styles.input, errors.confirmPassword && styles.errorInput]}
       />
-      {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
+      {errors.confirmPassword && (
+        <Text style={styles.errorText}>{errors.confirmPassword}</Text>
+      )}
 
       {/* Monthly Income */}
       <TextInput
@@ -123,20 +135,33 @@ export default function Signup() {
       />
       {errors.income && <Text style={styles.errorText}>{errors.income}</Text>}
 
-      {/* Currency Picker */}
-      <View style={[styles.pickerContainer, errors.currency && styles.errorInput]}>
-        <Picker
-  selectedValue={currency}
-  onValueChange={(itemValue: string) => setCurrency(itemValue)}
-  style={styles.picker}
->
-  <Picker.Item label="USD - $" value="USD" />
-  <Picker.Item label="EUR - €" value="EUR" />
-  <Picker.Item label="GBP - £" value="GBP" />
-  <Picker.Item label="JPY - ¥" value="JPY" />
-  <Picker.Item label="AUD - $" value="AUD" />
-</Picker>
+      {/* Currency Dropdown */}
+      <View style={[styles.dropdownContainer, errors.currency && styles.errorInput]}>
+        <TouchableOpacity
+          style={styles.dropdownButton}
+          onPress={() => setShowCurrencyList(!showCurrencyList)}
+        >
+          <Text style={styles.dropdownText}>
+            {currencies.find((c) => c.value === currency)?.label || "Select Currency"}
+          </Text>
+        </TouchableOpacity>
 
+        {showCurrencyList && (
+          <View style={styles.dropdownList}>
+            {currencies.map((item) => (
+              <TouchableOpacity
+                key={item.value}
+                style={styles.dropdownItem}
+                onPress={() => {
+                  setCurrency(item.value);
+                  setShowCurrencyList(false);
+                }}
+              >
+                <Text style={styles.dropdownItemText}>{item.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </View>
       {errors.currency && <Text style={styles.errorText}>{errors.currency}</Text>}
 
@@ -187,21 +212,35 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#90ee90",
   },
-  pickerContainer: {
-  backgroundColor: "#fff",
-  borderRadius: 8,
-  borderWidth: 1,
-  borderColor: "#90ee90",
-  marginBottom: 10,
-  justifyContent: "center",
-  height: 50, 
-  paddingHorizontal: 10,    
-},
-picker: {
-  color: "#006400", // text color inside picker
-  fontSize: 16,
-  width: "100%",
-},
+  dropdownContainer: {
+    position: "relative",
+    marginBottom: 10,
+  },
+  dropdownButton: {
+    backgroundColor: "#fff",
+    padding: 14,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#90ee90",
+  },
+  dropdownText: {
+    fontSize: 16,
+    color: "#006400",
+  },
+  dropdownList: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#90ee90",
+    borderRadius: 8,
+    marginTop: 5,
+  },
+  dropdownItem: {
+    padding: 12,
+  },
+  dropdownItemText: {
+    fontSize: 16,
+    color: "#006400",
+  },
   errorInput: {
     borderColor: "red",
   },
