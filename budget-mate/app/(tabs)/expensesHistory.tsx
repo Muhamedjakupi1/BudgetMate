@@ -1,10 +1,13 @@
 import React from "react";
 import { View, Text, FlatList, StyleSheet } from "react-native";
 
-export default function ExpensesHistoryPage({ route }: any) {
-const doneExpenses = route.params?.doneExpenses || [];
+const doneExpenses = [
+  { id: "1", title: "Internet", amount: 25 },
+  { id: "2", title: "Groceries", amount: 60 },
+];
 
- return (
+export default function ExpensesHistory() {
+  return (
     <View style={styles.container}>
       <Text style={styles.title}>✅ Expenses History</Text>
       {doneExpenses.length === 0 ? (
@@ -12,7 +15,7 @@ const doneExpenses = route.params?.doneExpenses || [];
       ) : (
         <FlatList
           data={doneExpenses}
-          keyExtractor={item => item.id}
+          keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <View style={styles.item}>
               <Text>{item.title}</Text>
@@ -30,15 +33,18 @@ const styles = StyleSheet.create({
     flex: 1, 
     padding: 20, 
     backgroundColor: "#f7f7f7" 
-},
-  title: { fontSize: 22, 
+  },
+  title: { 
+    fontSize: 22, 
     fontWeight: "bold", 
     marginBottom: 20 
-},
+  },
   item: { 
     flexDirection: "row", 
     justifyContent: "space-between", 
-    padding: 10, backgroundColor: "#eee", 
-    marginBottom: 10, borderRadius: 8 
-},
+    padding: 10, 
+    backgroundColor: "#eee", 
+    marginBottom: 10, 
+    borderRadius: 8 
+  },
 });
