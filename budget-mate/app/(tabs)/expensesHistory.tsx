@@ -24,7 +24,7 @@ export default function ExpensesHistory() {
       {data.length === 0 ? (
         <Text>No expenses done yet</Text>
       ) : (
-        <FlatList
+      <> <FlatList
           data={data}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
@@ -33,13 +33,14 @@ export default function ExpensesHistory() {
               <Text>${item.amount}</Text>
             </View>
           )}
-        />
-       )}
-      <View style={styles.total}>
+          />
+          <View style={styles.total}>
         <Text>Total spent:</Text>
         <Text>${total}</Text>
        </View>
-    </SafeAreaView>
+       </>
+       )}
+      </SafeAreaView>
   );
 }
 
