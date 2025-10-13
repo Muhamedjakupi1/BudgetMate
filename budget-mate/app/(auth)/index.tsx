@@ -3,27 +3,25 @@ import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 
 export default function WelcomeScreen() {
-  const router = useRouter(); // <-- for navigation
+  const router = useRouter();
 
   return (
     <View style={styles.container}>
-      {/* Logo
-      <Image
-        source={require("../../assets/budgetmate-logo.png")}
-        style={styles.logo}
-        resizeMode="contain"
-      /> */}
-
       {/* Title */}
       <Text style={styles.title}>
-        <Text style={styles.titleBlue}>Buget</Text>
+        <Text style={styles.titleBlue}>Budget</Text>
         <Text style={styles.titleGreen}>Mate</Text>
       </Text>
 
       <Text style={styles.subtitle}>Smart savings, made simple.</Text>
 
-      <View style={{ flex: 1 }} />
+      {/* Logo */}
+      <Image
+        source={require("../../assets/images/budgetmate-logo.png")} // ✅ correct path
+        style={{ width: 120, height: 120, marginBottom: 30 }}
+      />
 
+      {/* Sign Up Button */}
       <TouchableOpacity
         style={styles.signupButton}
         onPress={() => router.replace("/(auth)/signup")}
@@ -31,6 +29,7 @@ export default function WelcomeScreen() {
         <Text style={styles.signupText}>Sign Up</Text>
       </TouchableOpacity>
 
+      {/* Sign In Link */}
       <Text style={styles.signinText}>
         Already have an account?{" "}
         <Text
@@ -51,11 +50,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
-  },
-  logo: {
-    width: 150,
-    height: 150,
-    marginBottom: 20,
   },
   title: {
     fontSize: 32,
