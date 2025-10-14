@@ -7,13 +7,13 @@ const Profile = () => {
     const user = {
         name: "Besa Gashi",
         email: "BesaGashi@example.com",
-        profilePic: require('../../assets/images/favicon.png'),
+        profilePic: require('../../assets/images/budgetmate-logo.png'),
         totalBudget: 500,
         totalSpent: 275,
         totalDoneExpenses: 5,
     };
     const handleLogout = () => {
-  router.replace(".././(auth)"); // navigates to auth/index and removes history
+  router.replace(".././(auth)"); 
 };
 
   return (
@@ -116,14 +116,5 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 16,
-  },
-  buttonHome: {
-    width: '20%',
-    height: '12%',
-    backgroundColor: '#42e36fff',
-    paddingVertical: 12,
-    borderRadius: 50,
-    alignItems: 'center',
-    justifyContent: 'center'
   }
 })

@@ -17,7 +17,7 @@ export default function WelcomeScreen() {
 
       {/* Logo */}
       <Image
-        source={require("../../assets/images/budgetmate-logo.png")} // ✅ correct path
+        source={require("../../assets/images/budgetmate-logo.png")} 
         style={{ width: 120, height: 120, marginBottom: 30 }}
       />
 
