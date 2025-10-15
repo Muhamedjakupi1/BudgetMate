@@ -1,37 +1,49 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from "expo-router"; 
+import { useRouter } from "expo-router";
 
 export default function SignUpScreen() {
-  const router = useRouter(); 
+  const router = useRouter();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
 
+  const [currency, setCurrency] = useState('');
+  const [showCurrencyOptions, setShowCurrencyOptions] = useState(false);
+  const currencyOptions = ['USD', 'EUR', 'GBP', 'JPY', 'CHF']; 
+
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+
   const handleSignUp = () => {
-  if (!name.trim() || !email.trim() || !password || !confirm) {
-    alert('Please fill in all fields');
-    return;
-  }
+    if (!name.trim() || !email.trim() || !password || !confirm || !currency.trim()) {
+      alert('Please fill in all fields');
+      return;
+    }
 
-  if (password !== confirm) {
-    alert('Passwords do not match');
-    return;
-  }
+    if (password !== confirm) {
+      alert('Passwords do not match');
+      return;
+    }
 
-  alert(`Account created for ${name}`);
-  router.push('/signin'); 
+    if (!acceptedTerms) {
+      alert('Please accept the Terms & Conditions');
+      return;
+    }
 
-  setName('');
-  setEmail('');
-  setPassword('');
-  setConfirm('');
-};
+    alert(`Account created for ${name} (${currency})`);
+    router.push('/signin');
 
+    setName('');
+    setEmail('');
+    setPassword('');
+    setConfirm('');
+    setCurrency('');
+    setAcceptedTerms(false);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -39,12 +51,7 @@ export default function SignUpScreen() {
         <Text style={styles.title}>Sign Up</Text>
 
         <View style={{ position: 'relative' }}>
-          <Ionicons
-            name="person-outline"
-            size={20}
-            color="#444"
-            style={{ position: 'absolute', top: 14, left: 12 }}
-          />
+          <Ionicons name="person-outline" size={20} color="#444" style={{ position: 'absolute', top: 14, left: 12 }} />
           <TextInput
             style={[styles.input, { paddingLeft: 38 }]}
             placeholder="Full Name"
@@ -55,12 +62,7 @@ export default function SignUpScreen() {
         </View>
 
         <View style={{ position: 'relative' }}>
-          <Ionicons
-            name="mail-outline"
-            size={20}
-            color="#444"
-            style={{ position: 'absolute', top: 14, left: 12 }}
-          />
+          <Ionicons name="mail-outline" size={20} color="#444" style={{ position: 'absolute', top: 14, left: 12 }} />
           <TextInput
             style={[styles.input, { paddingLeft: 38 }]}
             placeholder="Email"
@@ -73,12 +75,7 @@ export default function SignUpScreen() {
         </View>
 
         <View style={{ position: 'relative' }}>
-          <Ionicons
-            name="lock-closed-outline"
-            size={20}
-            color="#444"
-            style={{ position: 'absolute', top: 14, left: 12 }}
-          />
+          <Ionicons name="lock-closed-outline" size={20} color="#444" style={{ position: 'absolute', top: 14, left: 12 }} />
           <TextInput
             style={[styles.input, { paddingLeft: 38 }]}
             placeholder="Password"
@@ -90,12 +87,7 @@ export default function SignUpScreen() {
         </View>
 
         <View style={{ position: 'relative' }}>
-          <Ionicons
-            name="lock-open-outline"
-            size={20}
-            color="#444"
-            style={{ position: 'absolute', top: 14, left: 12 }}
-          />
+          <Ionicons name="lock-open-outline" size={20} color="#444" style={{ position: 'absolute', top: 14, left: 12 }} />
           <TextInput
             style={[styles.input, { paddingLeft: 38 }]}
             placeholder="Confirm Password"
@@ -106,13 +98,25 @@ export default function SignUpScreen() {
           />
         </View>
 
+    
+        <View style={styles.termsContainer}>
+          <Switch
+            value={acceptedTerms}
+            onValueChange={setAcceptedTerms}
+            thumbColor={acceptedTerms ? '#22ab54' : '#ccc'}
+          />
+          <Text style={styles.termsText}>
+            I accept the <Text style={styles.link}>Terms & Conditions</Text>
+          </Text>
+        </View>
+
         <TouchableOpacity onPress={handleSignUp} style={styles.button}>
-          <Text style={styles.buttonText}>Create Account</Text> 
+          <Text style={styles.buttonText}>Create Account</Text>
         </TouchableOpacity>
 
         <View style={styles.footerRow}>
           <Text style={styles.small}>Already have an account?</Text>
-          <TouchableOpacity onPress={() => router.push('/signin')}> 
+          <TouchableOpacity onPress={() => router.push('/signin')}>
             <Text style={styles.link}> Sign in</Text>
           </TouchableOpacity>
         </View>
@@ -175,5 +179,15 @@ const styles = StyleSheet.create({
     color: '#22c55e',
     fontWeight: '600',
     marginLeft: 6,
+  },
+  termsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  termsText: {
+    marginLeft: 10,
+    color: '#444',
+    flexShrink: 1,
   },
 });
