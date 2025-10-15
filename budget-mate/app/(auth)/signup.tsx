@@ -2,31 +2,36 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from "expo-router"; 
 
 export default function SignUpScreen() {
+  const router = useRouter(); 
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
 
   const handleSignUp = () => {
-    if (!name.trim() || !email.trim() || !password || !confirm) {
-      alert('Please fill in all fields');
-      return;
-    }
+  if (!name.trim() || !email.trim() || !password || !confirm) {
+    alert('Please fill in all fields');
+    return;
+  }
 
-    if (password !== confirm) {
-      alert('Passwords do not match');
-      return;
-    }
+  if (password !== confirm) {
+    alert('Passwords do not match');
+    return;
+  }
 
-    alert(`Account created for ${name}`);
+  alert(`Account created for ${name}`);
+  router.push('/signin'); 
 
-    setName('');
-    setEmail('');
-    setPassword('');
-    setConfirm('');
-  };
+  setName('');
+  setEmail('');
+  setPassword('');
+  setConfirm('');
+};
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -102,12 +107,12 @@ export default function SignUpScreen() {
         </View>
 
         <TouchableOpacity onPress={handleSignUp} style={styles.button}>
-          <Text style={styles.buttonText}>Create Account</Text> {/*edhe qitu*/}
+          <Text style={styles.buttonText}>Create Account</Text> 
         </TouchableOpacity>
 
         <View style={styles.footerRow}>
           <Text style={styles.small}>Already have an account?</Text>
-          <TouchableOpacity onPress={() => alert('Navigate to Sign In')}> {/**qitu boje me navigu te linku yt me router */}
+          <TouchableOpacity onPress={() => router.push('/signin')}> 
             <Text style={styles.link}> Sign in</Text>
           </TouchableOpacity>
         </View>
