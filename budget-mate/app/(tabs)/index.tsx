@@ -36,9 +36,6 @@ export default function HomePage() {
                 <Text style={styles.expenseAmount}>${item.amount}</Text>
             </View>
             <View style={styles.buttonsContainer}>
-                <TouchableOpacity style={[styles.btn, {backgroundColor: "#007BFF"}]}>
-                    <Text style={{ color: "white" }}>Edit</Text>
-                </TouchableOpacity>
                 <TouchableOpacity style={[styles.btn, {backgroundColor: "#FF3B30"}]}
                 onPress={() => deleteExpense(item.id)}>
                     <Text style={{ color: "white" }}>Delete</Text>
