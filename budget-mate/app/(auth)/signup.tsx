@@ -12,14 +12,11 @@ export default function SignUpScreen() {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
 
-  const [currency, setCurrency] = useState('');
-  const [showCurrencyOptions, setShowCurrencyOptions] = useState(false);
-  const currencyOptions = ['USD', 'EUR', 'GBP', 'JPY', 'CHF']; 
 
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const handleSignUp = () => {
-    if (!name.trim() || !email.trim() || !password || !confirm || !currency.trim()) {
+    if (!name.trim() || !email.trim() || !password || !confirm) {
       alert('Please fill in all fields');
       return;
     }
@@ -34,14 +31,13 @@ export default function SignUpScreen() {
       return;
     }
 
-    alert(`Account created for ${name} (${currency})`);
+    alert(`Account created for ${name}`);
     router.push('/signin');
 
     setName('');
     setEmail('');
     setPassword('');
     setConfirm('');
-    setCurrency('');
     setAcceptedTerms(false);
   };
 
