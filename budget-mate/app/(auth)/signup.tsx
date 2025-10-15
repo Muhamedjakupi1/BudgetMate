@@ -97,16 +97,17 @@ export default function Signup() {
         color={error ? "#ff6347" : "#777"}
         style={styles.icon}
       />
-      <TextInput
-        placeholder={placeholder}
-        value={value}
-        onChangeText={onChangeText}
-        keyboardType={keyboardType}
-        secureTextEntry={secureTextEntry}
-        style={[styles.input, { outlineStyle: "none" }]} // removes web outline
-        placeholderTextColor="#999"
-        underlineColorAndroid="transparent" // removes Android black border
-      />
+  <TextInput
+  placeholder={placeholder}
+  value={value}
+  onChangeText={onChangeText}
+  keyboardType={keyboardType}
+  secureTextEntry={secureTextEntry}
+  style={styles.input}
+  placeholderTextColor="#999"
+  underlineColorAndroid="transparent" 
+/>
+
     </View>
   );
 
@@ -324,12 +325,15 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   input: {
-    flex: 1,
-    fontSize: 16,
-    color: "#2c3e50",
-    height: "100%",
-    borderWidth: 0, // remove border completely
-  },
+  flex: 1,
+  fontSize: 16,
+  color: "#2c3e50",
+  height: "100%",
+  borderWidth: 0,
+  outlineColor: "transparent", 
+  outlineWidth: 0,             
+},
+
   errorText: {
     color: "#ff6347",
     marginBottom: 10,
