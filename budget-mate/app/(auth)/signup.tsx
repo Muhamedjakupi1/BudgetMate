@@ -84,7 +84,6 @@ export default function Signup() {
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Sign Up</Text>
 
-      {/* Full Name */}
       <TextInput
         placeholder="Full Name"
         value={fullName}
@@ -93,7 +92,6 @@ export default function Signup() {
       />
       {errors.fullName && <Text style={styles.errorText}>{errors.fullName}</Text>}
 
-      {/* Email */}
       <TextInput
         placeholder="Email"
         value={email}
@@ -103,7 +101,6 @@ export default function Signup() {
       />
       {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
-      {/* Password */}
       <TextInput
         placeholder="Password"
         value={password}
@@ -113,7 +110,6 @@ export default function Signup() {
       />
       {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
-      {/* Confirm Password */}
       <TextInput
         placeholder="Confirm Password"
         value={confirmPassword}
@@ -125,7 +121,6 @@ export default function Signup() {
         <Text style={styles.errorText}>{errors.confirmPassword}</Text>
       )}
 
-      {/* Monthly Income */}
       <TextInput
         placeholder="Monthly Income"
         value={income}
@@ -135,7 +130,6 @@ export default function Signup() {
       />
       {errors.income && <Text style={styles.errorText}>{errors.income}</Text>}
 
-      {/* Currency Dropdown */}
       <View style={[styles.dropdownContainer, errors.currency && styles.errorInput]}>
         <TouchableOpacity
           style={styles.dropdownButton}
@@ -165,7 +159,6 @@ export default function Signup() {
       </View>
       {errors.currency && <Text style={styles.errorText}>{errors.currency}</Text>}
 
-      {/* Savings Goal (optional) */}
       <TextInput
         placeholder="Savings Goal (optional)"
         value={savingsGoal}
@@ -174,14 +167,12 @@ export default function Signup() {
         style={styles.input}
       />
 
-      {/* Terms & Conditions */}
       <View style={styles.termsContainer}>
         <Switch value={termsAccepted} onValueChange={setTermsAccepted} />
         <Text style={styles.termsText}>I accept the Terms & Conditions</Text>
       </View>
       {errors.terms && <Text style={styles.errorText}>{errors.terms}</Text>}
 
-      {/* Signup Button */}
       <TouchableOpacity style={styles.button} onPress={handleSignup}>
         <Text style={styles.buttonText}>Sign Up</Text>
       </TouchableOpacity>
@@ -194,13 +185,13 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: "center",
     padding: 20,
-    backgroundColor: "#f0fff0",
+    backgroundColor: "#ffffff",
   },
   title: {
     fontSize: 28,
     fontWeight: "bold",
     marginBottom: 20,
-    color: "#006400",
+    color: "#000000",
     textAlign: "center",
   },
   input: {
@@ -210,7 +201,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: "#90ee90",
+    borderColor: "#000000",
   },
   dropdownContainer: {
     position: "relative",
@@ -221,11 +212,11 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#90ee90",
+    borderColor: "#000000",
   },
   dropdownText: {
     fontSize: 16,
-    color: "#006400",
+    color: "#000000",
   },
   dropdownList: {
     backgroundColor: "#fff",
@@ -239,7 +230,7 @@ const styles = StyleSheet.create({
   },
   dropdownItemText: {
     fontSize: 16,
-    color: "#006400",
+    color: "#000000",
   },
   errorInput: {
     borderColor: "red",
