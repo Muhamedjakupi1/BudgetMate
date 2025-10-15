@@ -36,6 +36,9 @@ export default function Signup() {
   const [savingsGoal, setSavingsGoal] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const router = useRouter();
 
   const currencies = [
@@ -82,34 +85,44 @@ export default function Signup() {
   };
 
   const renderInputField = (
-    placeholder: string,
-    value: string,
-    onChangeText: (text: string) => void,
-    keyboardType: "default" | "email-address" | "numeric" = "default",
-    secureTextEntry: boolean = false,
-    error: string | undefined,
-    iconName: string
-  ) => (
-    <View style={[styles.inputContainer, error && styles.errorContainer]}>
-      <Ionicons
-        name={iconName as any}
-        size={20}
-        color={error ? "#ff6347" : "#777"}
-        style={styles.icon}
-      />
-  <TextInput
-  placeholder={placeholder}
-  value={value}
-  onChangeText={onChangeText}
-  keyboardType={keyboardType}
-  secureTextEntry={secureTextEntry}
-  style={styles.input}
-  placeholderTextColor="#999"
-  underlineColorAndroid="transparent" 
-/>
-
-    </View>
-  );
+  placeholder: string,
+  value: string,
+  onChangeText: (text: string) => void,
+  keyboardType: "default" | "email-address" | "numeric" = "default",
+  secureTextEntry: boolean = false,
+  error: string | undefined,
+  iconName: string,
+  toggleVisibility?: () => void,
+  isPasswordVisible?: boolean
+) => (
+  <View style={[styles.inputContainer, error && styles.errorContainer]}>
+    <Ionicons
+      name={iconName as any}
+      size={20}
+      color={error ? "#ff6347" : "#777"}
+      style={styles.icon}
+    />
+    <TextInput
+      placeholder={placeholder}
+      value={value}
+      onChangeText={onChangeText}
+      keyboardType={keyboardType}
+      secureTextEntry={secureTextEntry}
+      style={styles.input}
+      placeholderTextColor="#999"
+      underlineColorAndroid="transparent"
+    />
+    {toggleVisibility && (
+      <TouchableOpacity onPress={toggleVisibility}>
+        <Ionicons
+          name={isPasswordVisible ? "eye-off-outline" : "eye-outline"}
+          size={22}
+          color="#777"
+        />
+      </TouchableOpacity>
+    )}
+  </View>
+);
 
   return (
     <KeyboardAvoidingView
@@ -148,30 +161,34 @@ export default function Signup() {
           {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
           {renderInputField(
-            "Password",
-            password,
-            setPassword,
-            "default",
-            true,
-            errors.password,
-            "lock-closed-outline"
-          )}
-          {errors.password && (
-            <Text style={styles.errorText}>{errors.password}</Text>
-          )}
+  "Password",
+  password,
+  setPassword,
+  "default",
+  !showPassword, // hide if not toggled
+  errors.password,
+  "lock-closed-outline",
+  () => setShowPassword(!showPassword),
+  showPassword
+)}
+{errors.password && (
+  <Text style={styles.errorText}>{errors.password}</Text>
+)}
 
-          {renderInputField(
-            "Confirm Password",
-            confirmPassword,
-            setConfirmPassword,
-            "default",
-            true,
-            errors.confirmPassword,
-            "lock-closed-outline"
-          )}
-          {errors.confirmPassword && (
-            <Text style={styles.errorText}>{errors.confirmPassword}</Text>
-          )}
+{renderInputField(
+  "Confirm Password",
+  confirmPassword,
+  setConfirmPassword,
+  "default",
+  !showConfirmPassword,
+  errors.confirmPassword,
+  "lock-closed-outline",
+  () => setShowConfirmPassword(!showConfirmPassword),
+  showConfirmPassword
+)}
+{errors.confirmPassword && (
+  <Text style={styles.errorText}>{errors.confirmPassword}</Text>
+)}
 
           {renderInputField(
             "Monthly Income",
