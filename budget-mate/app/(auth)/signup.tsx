@@ -1,420 +1,174 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Alert,
-  Switch,
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-} from "react-native";
-import { useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import React, { useState } from 'react';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 
-type Errors = {
-  fullName?: string;
-  email?: string;
-  password?: string;
-  confirmPassword?: string;
-  income?: string;
-  currency?: string;
-  terms?: string;
-};
+export default function SignUpScreen() {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
 
-export default function Signup() {
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [income, setIncome] = useState("");
-  const [currency, setCurrency] = useState("USD");
-  const [showCurrencyList, setShowCurrencyList] = useState(false);
-  const [savingsGoal, setSavingsGoal] = useState("");
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [errors, setErrors] = useState<Errors>({});
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const handleSignUp = () => {
+    if (!name.trim() || !email.trim() || !password || !confirm) {
+      alert('Please fill in all fields');
+      return;
+    }
 
-  const router = useRouter();
+    if (password !== confirm) {
+      alert('Passwords do not match');
+      return;
+    }
 
-  const currencies = [
-    { label: "USD - $", value: "USD" },
-    { label: "EUR - €", value: "EUR" },
-    { label: "GBP - £", value: "GBP" },
-    { label: "JPY - ¥", value: "JPY" },
-    { label: "AUD - $", value: "AUD" },
-  ];
+    alert(`Account created for ${name}`);
 
-  const validate = () => {
-    const newErrors: Errors = {};
-    if (!fullName) newErrors.fullName = "Full Name is required";
-    if (!email) newErrors.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = "Email is invalid";
-    if (!password) newErrors.password = "Password is required";
-    else if (password.length < 6)
-      newErrors.password = "Password must be at least 6 characters";
-    if (password !== confirmPassword)
-      newErrors.confirmPassword = "Passwords do not match";
-    if (!income || isNaN(Number(income)) || Number(income) <= 0)
-      newErrors.income = "Valid monthly income is required";
-    if (!currency) newErrors.currency = "Currency is required";
-    if (!termsAccepted) newErrors.terms = "You must accept the terms";
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setName('');
+    setEmail('');
+    setPassword('');
+    setConfirm('');
   };
-
-  const handleSignup = () => {
-    if (!validate()) return;
-
-    Alert.alert("Success", `Account created for ${fullName}!`);
-    router.replace("/(tabs)");
-
-    setFullName("");
-    setEmail("");
-    setPassword("");
-    setConfirmPassword("");
-    setIncome("");
-    setCurrency("USD");
-    setSavingsGoal("");
-    setTermsAccepted(false);
-  };
-
-  const renderInputField = (
-  placeholder: string,
-  value: string,
-  onChangeText: (text: string) => void,
-  keyboardType: "default" | "email-address" | "numeric" = "default",
-  secureTextEntry: boolean = false,
-  error: string | undefined,
-  iconName: string,
-  toggleVisibility?: () => void,
-  isPasswordVisible?: boolean
-) => (
-  <View style={[styles.inputContainer, error && styles.errorContainer]}>
-    <Ionicons
-      name={iconName as any}
-      size={20}
-      color={error ? "#ff6347" : "#777"}
-      style={styles.icon}
-    />
-    <TextInput
-      placeholder={placeholder}
-      value={value}
-      onChangeText={onChangeText}
-      keyboardType={keyboardType}
-      secureTextEntry={secureTextEntry}
-      style={styles.input}
-      placeholderTextColor="#999"
-      underlineColorAndroid="transparent"
-    />
-    {toggleVisibility && (
-      <TouchableOpacity onPress={toggleVisibility}>
-        <Ionicons
-          name={isPasswordVisible ? "eye-off-outline" : "eye-outline"}
-          size={22}
-          color="#777"
-        />
-      </TouchableOpacity>
-    )}
-  </View>
-);
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1 }}
-    >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.card}>
-          <Text style={styles.title}>Create Your Account</Text>
-          <Text style={styles.subtitle}>
-            Set up your profile to start your financial journey.
-          </Text>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.card}>
+        <Text style={styles.title}>Sign Up</Text>
 
-          {renderInputField(
-            "Full Name",
-            fullName,
-            setFullName,
-            "default",
-            false,
-            errors.fullName,
-            "person-outline"
-          )}
-          {errors.fullName && (
-            <Text style={styles.errorText}>{errors.fullName}</Text>
-          )}
+        <View style={{ position: 'relative' }}>
+          <Ionicons
+            name="person-outline"
+            size={20}
+            color="#444"
+            style={{ position: 'absolute', top: 14, left: 12 }}
+          />
+          <TextInput
+            style={[styles.input, { paddingLeft: 38 }]}
+            placeholder="Full Name"
+            value={name}
+            onChangeText={setName}
+            placeholderTextColor="#aaa"
+          />
+        </View>
 
-          {renderInputField(
-            "Email",
-            email,
-            setEmail,
-            "email-address",
-            false,
-            errors.email,
-            "mail-outline"
-          )}
-          {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+        <View style={{ position: 'relative' }}>
+          <Ionicons
+            name="mail-outline"
+            size={20}
+            color="#444"
+            style={{ position: 'absolute', top: 14, left: 12 }}
+          />
+          <TextInput
+            style={[styles.input, { paddingLeft: 38 }]}
+            placeholder="Email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            placeholderTextColor="#aaa"
+          />
+        </View>
 
-          {renderInputField(
-  "Password",
-  password,
-  setPassword,
-  "default",
-  !showPassword, // hide if not toggled
-  errors.password,
-  "lock-closed-outline",
-  () => setShowPassword(!showPassword),
-  showPassword
-)}
-{errors.password && (
-  <Text style={styles.errorText}>{errors.password}</Text>
-)}
+        <View style={{ position: 'relative' }}>
+          <Ionicons
+            name="lock-closed-outline"
+            size={20}
+            color="#444"
+            style={{ position: 'absolute', top: 14, left: 12 }}
+          />
+          <TextInput
+            style={[styles.input, { paddingLeft: 38 }]}
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            placeholderTextColor="#aaa"
+          />
+        </View>
 
-{renderInputField(
-  "Confirm Password",
-  confirmPassword,
-  setConfirmPassword,
-  "default",
-  !showConfirmPassword,
-  errors.confirmPassword,
-  "lock-closed-outline",
-  () => setShowConfirmPassword(!showConfirmPassword),
-  showConfirmPassword
-)}
-{errors.confirmPassword && (
-  <Text style={styles.errorText}>{errors.confirmPassword}</Text>
-)}
+        <View style={{ position: 'relative' }}>
+          <Ionicons
+            name="lock-open-outline"
+            size={20}
+            color="#444"
+            style={{ position: 'absolute', top: 14, left: 12 }}
+          />
+          <TextInput
+            style={[styles.input, { paddingLeft: 38 }]}
+            placeholder="Confirm Password"
+            value={confirm}
+            onChangeText={setConfirm}
+            secureTextEntry
+            placeholderTextColor="#aaa"
+          />
+        </View>
 
-          {renderInputField(
-            "Monthly Income",
-            income,
-            setIncome,
-            "numeric",
-            false,
-            errors.income,
-            "cash-outline"
-          )}
-          {errors.income && (
-            <Text style={styles.errorText}>{errors.income}</Text>
-          )}
+        <TouchableOpacity onPress={handleSignUp} style={styles.button}>
+          <Text style={styles.buttonText}>Create Account</Text> {/*edhe qitu*/}
+        </TouchableOpacity>
 
-          <View
-            style={[styles.inputContainer, errors.currency && styles.errorContainer]}
-          >
-            <Ionicons
-              name="globe-outline"
-              size={20}
-              color={errors.currency ? "#ff6347" : "#777"}
-              style={styles.icon}
-            />
-            <TouchableOpacity
-              style={styles.dropdownButton}
-              onPress={() => setShowCurrencyList(!showCurrencyList)}
-            >
-              <Text style={styles.dropdownText}>
-                {currencies.find((c) => c.value === currency)?.label ||
-                  "Select Currency"}
-              </Text>
-            </TouchableOpacity>
-            <Ionicons
-              name={showCurrencyList ? "chevron-up-outline" : "chevron-down-outline"}
-              size={18}
-              color="#777"
-            />
-          </View>
-          {errors.currency && (
-            <Text style={styles.errorText}>{errors.currency}</Text>
-          )}
-
-          {showCurrencyList && (
-            <View style={styles.dropdownList}>
-              <FlatList
-                data={currencies}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={styles.dropdownItem}
-                    onPress={() => {
-                      setCurrency(item.value);
-                      setShowCurrencyList(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownItemText}>{item.label}</Text>
-                  </TouchableOpacity>
-                )}
-                keyExtractor={(item) => item.value}
-              />
-            </View>
-          )}
-
-          {renderInputField(
-            "Savings Goal (optional)",
-            savingsGoal,
-            setSavingsGoal,
-            "numeric",
-            false,
-            undefined,
-            "trending-up-outline"
-          )}
-
-          <View style={styles.termsContainer}>
-            <Switch
-              trackColor={{ false: "#ccc", true: "#3DBA6F" }}
-              thumbColor={termsAccepted ? "#fff" : "#f4f3f4"}
-              ios_backgroundColor="#3e3e3e"
-              value={termsAccepted}
-              onValueChange={setTermsAccepted}
-            />
-            <Text style={styles.termsText}>
-              I accept the **Terms & Conditions**
-            </Text>
-          </View>
-          {errors.terms && <Text style={styles.errorText}>{errors.terms}</Text>}
-
-          <TouchableOpacity
-            style={styles.button}
-            onPress={handleSignup}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.buttonText}>Sign Up</Text>
+        <View style={styles.footerRow}>
+          <Text style={styles.small}>Already have an account?</Text>
+          <TouchableOpacity onPress={() => alert('Navigate to Sign In')}> {/**qitu boje me navigu te linku yt me router */}
+            <Text style={styles.link}> Sign in</Text>
           </TouchableOpacity>
         </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  background: {
+  container: {
     flex: 1,
-    resizeMode: "cover",
-    justifyContent: "center",
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: "center",
-    paddingVertical: 40,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
   },
   card: {
-    marginHorizontal: 20,
-    padding: 30,
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    borderRadius: 20,
-    shadowColor: "#faf6f6ff",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 8,
+    width: '100%',
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 12,
   },
   title: {
-    fontSize: 30,
-    fontWeight: "900",
-    marginBottom: 8,
-    color: "#2c3e50",
-    textAlign: "center",
-  },
-  subtitle: {
-    fontSize: 15,
-    color: "#7f8c8d",
-    textAlign: "center",
-    marginBottom: 25,
-  },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    marginBottom: 15,
-    paddingHorizontal: 15,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    height: 55,
-  },
-  errorContainer: {
-    borderColor: "#ff6347",
-    borderWidth: 2,
-  },
-  icon: {
-    marginRight: 10,
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#000',
+    marginBottom: 20,
+    textAlign: 'center',
   },
   input: {
-  flex: 1,
-  fontSize: 16,
-  color: "#2c3e50",
-  height: "100%",
-  borderWidth: 0,
-  outlineColor: "transparent", 
-  outlineWidth: 0,             
-},
-
-  errorText: {
-    color: "#ff6347",
-    marginBottom: 10,
-    fontSize: 12,
-    marginLeft: 5,
-  },
-  dropdownButton: {
-    flex: 1,
-    height: "100%",
-    justifyContent: "center",
-  },
-  dropdownText: {
-    fontSize: 16,
-    color: "#2c3e50",
-  },
-  dropdownList: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    borderRadius: 8,
-    marginTop: -10,
-    marginBottom: 10,
-    marginHorizontal: 20,
-    padding: 5,
-    zIndex: 10,
-    position: "absolute",
-    top: 520,
-    left: 0,
-    right: 0,
-  },
-  dropdownItem: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    paddingHorizontal: 14,
     paddingVertical: 12,
-    paddingHorizontal: 10,
-  },
-  dropdownItemText: {
-    fontSize: 16,
-    color: "#2c3e50",
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#444',
+    color: '#000',
   },
   button: {
-    backgroundColor: "#3DBA6F",
-    padding: 18,
-    borderRadius: 12,
-    marginTop: 25,
-    alignItems: "center",
-    shadowColor: "#3DBA6F",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 5,
-    elevation: 6,
+    marginTop: 12,
+    backgroundColor: '#22ab54',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
   },
   buttonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
+    color: '#fff',
+    fontWeight: '700',
   },
-  termsContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 10,
-    paddingLeft: 5,
+  footerRow: {
+    marginTop: 14,
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
-  termsText: {
-    marginLeft: 10,
-    fontSize: 14,
-    color: "#7f8c8d",
+  small: {
+    color: '#444',
+  },
+  link: {
+    color: '#22c55e',
+    fontWeight: '600',
+    marginLeft: 6,
   },
 });
