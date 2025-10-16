@@ -24,11 +24,12 @@ export default function SignInScreen() {
   };
 
   return (
-    <SafeAreaView>
-      <View>
-        <Text>Log In</Text>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.card}>
+        <Text style={styles.title}>Log In</Text>
 
         <TextInput
+          style={styles.input}
           placeholder="Email"
           value={email}
           onChangeText={setEmail}
@@ -38,6 +39,7 @@ export default function SignInScreen() {
         />
 
         <TextInput
+          style={styles.input}
           placeholder="Password"
           value={password}
           onChangeText={setPassword}
@@ -45,14 +47,14 @@ export default function SignInScreen() {
           placeholderTextColor="#aaa"
         />
 
-        <TouchableOpacity onPress={handleLogin}>
-          <Text>Sign In</Text>
+        <TouchableOpacity onPress={handleLogin} style={styles.button}>
+          <Text style={styles.buttonText}>Sign In</Text>
         </TouchableOpacity>
 
-        <View>
-          <Text>Don't have an account?</Text>
+        <View style={styles.footerRow}>
+          <Text style={styles.small}>Don't have an account?</Text>
           <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
-            <Text> Sign up</Text>
+            <Text style={styles.link}> Sign up</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -60,4 +62,59 @@ export default function SignInScreen() {
   );
 }
 
-
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
+  card: {
+    width: '100%',
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 12,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#000',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  input: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#444',
+    color: '#000',
+  },
+  button: {
+    marginTop: 12,
+    backgroundColor: '#22ab54',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: '700',
+  },
+  footerRow: {
+    marginTop: 14,
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  small: {
+    color: '#444',
+  },
+  link: {
+    color: '#22c55e',
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+});
