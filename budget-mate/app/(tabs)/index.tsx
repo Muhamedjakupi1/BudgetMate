@@ -1,4 +1,4 @@
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context'
 import React, { useState } from "react";
 import {  addDoneExpense } from "../sharedData";
@@ -51,6 +51,7 @@ export default function HomePage() {
 
     return (
         <SafeAreaView style={styles.container}>
+            <StatusBar barStyle="dark-content" backgroundColor="white"></StatusBar>
             <View style={styles.header}>
                 <Text style={styles.budgetText}>💵 Budget: ${budget}</Text>
             </View>

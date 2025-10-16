@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView } from 'react-native'
+import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, StatusBar } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import React from 'react'
 import { router } from 'expo-router';
@@ -18,6 +18,7 @@ const Profile = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="white"></StatusBar>
         <View style={styles.sContainer}>
             <View style={styles.profileHeader}>
                 <Image source={user.profilePic} style={styles.profileImage}></Image>

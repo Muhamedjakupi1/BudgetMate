@@ -24,7 +24,7 @@ export default function ExpensesHistory() {
       <Text style={styles.title}>✅ Expenses History</Text>
       <View>
       {data.length === 0 ? (
-        <Text>No expenses done yet</Text>
+        <Text style={styles.noExpenses}>No expenses done yet</Text>
       ) : (
         <>
        <FlatList
@@ -61,6 +61,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 20, 
     marginTop: 20
+  },
+  noExpenses:{
+   fontSize: 16,
+   textAlign: "center",
+   marginTop: 300
   },
  expenseItem: {
     backgroundColor: "#fff",
