@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View, StatusBar, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from "expo-router";
 
 export default function SignInScreen() {
   const [email, setEmail] = useState('');
@@ -14,35 +15,45 @@ export default function SignInScreen() {
       return;
     }
 
+
     Alert.alert('Welcome back!', `Logged in as ${email}`);
+
+    router.push('/(tabs)');
+
     setEmail('');
     setPassword('');
-    
   };
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="white" />
       <View style={styles.card}>
-        <Text style={styles.title}>Sign In</Text>
+        <Text style={styles.title}>Log In</Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          placeholderTextColor="#aaa"
-        />
+        <View style={{ position: 'relative' }}>
+          <Ionicons name="mail-outline" size={20} color="#444" style={{ position: 'absolute', top: 14, left: 12 }} />
+          <TextInput
+            style={[styles.input, { paddingLeft: 38 }]}
+            placeholder="Email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            placeholderTextColor="#aaa"
+          />
+        </View>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          placeholderTextColor="#aaa"
-        />
+        <View style={{ position: 'relative' }}>
+          <Ionicons name="lock-closed-outline" size={20} color="#444" style={{ position: 'absolute', top: 14, left: 12 }} />
+          <TextInput
+            style={[styles.input, { paddingLeft: 38 }]}
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            placeholderTextColor="#aaa"
+          />
+        </View>
 
         <TouchableOpacity onPress={handleLogin} style={styles.button}>
           <Text style={styles.buttonText}>Sign In</Text>
@@ -50,7 +61,7 @@ export default function SignInScreen() {
 
         <View style={styles.footerRow}>
           <Text style={styles.small}>Don't have an account?</Text>
-          <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
+          <TouchableOpacity onPress={() => router.push('/signup')}>
             <Text style={styles.link}> Sign up</Text>
           </TouchableOpacity>
         </View>
