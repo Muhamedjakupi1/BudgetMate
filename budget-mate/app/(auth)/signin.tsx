@@ -26,7 +26,7 @@ export default function SignInScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.card}>
-        <Text style={styles.title}>Log In</Text>
+        <Text style={styles.title}>Sign In</Text>
 
         <TextInput
           style={styles.input}
