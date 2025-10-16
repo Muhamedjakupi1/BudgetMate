@@ -9,6 +9,7 @@ export default function ExpensesHistory() {
  const[total, setTotal] = useState(0);
  useFocusEffect(
   useCallback(()=>{
+    console.log("Done expenses: ", doneExpenses)
   setData([...doneExpenses]);
 
   const totalAmount = doneExpenses.reduce(
@@ -21,10 +22,12 @@ export default function ExpensesHistory() {
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>✅ Expenses History</Text>
+      <View>
       {data.length === 0 ? (
         <Text>No expenses done yet</Text>
       ) : (
-      <> <FlatList
+        <>
+       <FlatList
           data={data}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
@@ -40,6 +43,7 @@ export default function ExpensesHistory() {
        </View>
        </>
        )}
+       </View>
       </SafeAreaView>
   );
 }
