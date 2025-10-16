@@ -7,6 +7,7 @@ import {
   Button,
   StyleSheet,
   Platform,
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FormInput from '../../components/ui/textinput';
@@ -64,6 +65,7 @@ const AddTransaction: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="white"></StatusBar>
       <View style={styles.container}>
         {/* Navbar for Expense / Income */}
         <View style={styles.navbar}>
