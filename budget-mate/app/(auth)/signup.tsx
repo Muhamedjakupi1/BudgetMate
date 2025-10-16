@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View, Switch } from 'react-native';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View, Switch, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from "expo-router";
@@ -43,6 +43,7 @@ export default function SignUpScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="white"></StatusBar>
       <View style={styles.card}>
         <Text style={styles.title}>Sign Up</Text>
 

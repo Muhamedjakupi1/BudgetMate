@@ -1,12 +1,14 @@
 import React from "react";
-import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, Image, TouchableOpacity, StyleSheet, StatusBar } from "react-native";
 import { useRouter } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function WelcomeScreen() {
   const router = useRouter();
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="white"></StatusBar>
       <Text style={styles.title}>
         <Text style={styles.titleBlue}>Budget</Text>
         <Text style={styles.titleGreen}>Mate</Text>
@@ -35,7 +37,7 @@ export default function WelcomeScreen() {
           Sign in.
         </Text>
       </Text>
-    </View>
+    </SafeAreaView>
   );
 }
 
