@@ -16,23 +16,23 @@ export default function SignUpScreen() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const handleSignUp = () => {
-    if (!name.trim() || !email.trim() || !password || !confirm) {
-      alert('Please fill in all fields');
-      return;
-    }
+    // if (!name.trim() || !email.trim() || !password || !confirm) {
+    //   alert('Please fill in all fields');
+    //   return;
+    // }
 
-    if (password !== confirm) {
-      alert('Passwords do not match');
-      return;
-    }
+    // if (password !== confirm) {
+    //   alert('Passwords do not match');
+    //   return;
+    // }
 
-    if (!acceptedTerms) {
-      alert('Please accept the Terms & Conditions');
-      return;
-    }
+    // if (!acceptedTerms) {
+    //   alert('Please accept the Terms & Conditions');
+    //   return;
+    // }
 
     alert(`Account created for ${name}`);
-    router.push('/signin');
+    router.push('/(tabs)');
 
     setName('');
     setEmail('');
