@@ -14,13 +14,10 @@ export default function SignInScreen() {
       return;
     }
 
-    // Temporary success message
     Alert.alert('Welcome back!', `Logged in as ${email}`);
     setEmail('');
     setPassword('');
-
-    // Example: after login, navigate to main app tabs
-    // router.replace('/(tabs)');
+    
   };
 
   return (
