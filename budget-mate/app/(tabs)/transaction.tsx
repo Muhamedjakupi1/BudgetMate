@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FormInput from '../../components/ui/textinput';
+import { useBudget } from "../../constants/budgetContext";
 
 const categoryColors: Record<string, string> = {
   Transport: '#E53935',
@@ -28,6 +29,8 @@ const categoryColors: Record<string, string> = {
 };
 
 const AddTransaction: React.FC = () => {
+  const { addIncome, addExpense, balance } = useBudget();
+
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('');
@@ -51,15 +54,29 @@ const AddTransaction: React.FC = () => {
   const options = type === 'expense' ? expenseCategories : incomeCategories;
 
   const handleSave = () => {
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      alert('Please enter a valid amount!');
+      return;
+    }
+    if (type === 'expense' && numAmount > balance) {
+      alert('Insufficient funds!');
+      return;
+    }
     const transaction = {
       type,
       date: date.toDateString(),
-      amount,
+      amount: numAmount,
       category,
       note,
       paymentType,
       payeeName,
     };
+    if (type === 'income') {
+      addIncome(numAmount);
+    } else {
+      addExpense(numAmount);
+    }
     console.log('Transaction Saved:', transaction);
   };
 
