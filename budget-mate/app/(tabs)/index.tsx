@@ -1,134 +1,61 @@
 import { FlatList, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { SafeAreaView } from 'react-native-safe-area-context'
-import React, { useState } from "react";
-import {  addDoneExpense } from "../sharedData";
-
-type Expenses = {
-    id: string;
-    title: string;
-    amount: number;
-    done: boolean;
-}
+import { SafeAreaView } from "react-native-safe-area-context";
+import React from "react";
+import { useBudget } from "../../constants/budgetContext";
 
 export default function HomePage() {
+  const { transactions, balance, deleteTransaction, markAsDone } = useBudget();
 
-    const [doneExpenses, setDoneExpenses] = useState<Expenses[]>([]);
-    const [ budget, setBudget ] = useState(0);
-    const [expenses, setExpenses] = useState<Expenses[]>([
-        { id: "1", title: "Groceries", amount: 60, done: false },
-        { id: "2", title: "Internet", amount: 25, done: true },
-        { id: "3", title: "Electricity", amount: 40, done: false },
-    ]);
+  // Only show pending expenses
+  const pendingExpenses = transactions.filter(t => t.type === "expense" && !t.done);
 
-    const handleDone = (item: any) => {
-        addDoneExpense(item);
-        setExpenses(expenses.filter((e)=>e.id !== item.id))
- }
+  const renderExpense = ({ item }: any) => (
+    <View style={styles.expenseItem}>
+      <View>
+        <Text style={styles.expenseTitle}>{item.category}</Text>
+        <Text style={styles.expenseAmount}>${item.amount}</Text>
+      </View>
+      <View style={styles.buttonsContainer}>
+        <TouchableOpacity
+          style={[styles.btn, { backgroundColor: "#FF3B30" }]}
+          onPress={() => deleteTransaction(item.id)}
+        >
+          <Text style={{ color: "white" }}>Delete</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.btn, { backgroundColor: "#34C759" }]}
+          onPress={() => markAsDone(item.id)}
+        >
+          <Text style={{ color: "white" }}>Done</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 
-    const deleteExpense = (id: string) => {
-        setExpenses(expenses.filter((expense) => expense.id !== id))
-    }
-
-    const renderExpense = ({ item }: { item: Expenses }) => (
-        <View style={styles.expenseItem}>
-            <View>
-                <Text style={styles.expenseTitle}>{item.title}</Text>
-                <Text style={styles.expenseAmount}>${item.amount}</Text>
-            </View>
-            <View style={styles.buttonsContainer}>
-                <TouchableOpacity style={[styles.btn, {backgroundColor: "#FF3B30"}]}
-                onPress={() => deleteExpense(item.id)}>
-                    <Text style={{ color: "white" }}>Delete</Text>
-                </TouchableOpacity>
-               <TouchableOpacity style={[styles.btn, { backgroundColor: "#34C759" }]}
-               onPress={()=> handleDone(item)}>
-                <Text style={{ color: "white" }}>Done</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
-
-
-    return (
-        <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="white"></StatusBar>
-            <View style={styles.header}>
-                <Text style={styles.budgetText}>💵 Budget: ${budget}</Text>
-            </View>
-
-            <FlatList
-                data={expenses}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => renderExpense({ item })}
-                contentContainerStyle={styles.listContainer}
-            />
-        </SafeAreaView>
-    );
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="white" />
+      <View style={styles.header}>
+        <Text style={styles.budgetText}>💵 Budget: ${balance}</Text>
+      </View>
+      <FlatList
+        data={pendingExpenses.sort((a, b) => b.id.localeCompare(a.id))}
+        keyExtractor={(item) => item.id}
+        renderItem={renderExpense}
+        contentContainerStyle={styles.listContainer}
+      />
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#f7f7f7",
-        paddingHorizontal: 20,
-        paddingTop: 20,
-    },
-    header: {
-        flexDirection: "row",
-        justifyContent: "center",
-        alignItems: "center",
-        marginBottom: 30,
-        paddingHorizontal: 20,
-        paddingTop: 20,
-    },
-    headerButton: {
-        fontSize: 16,
-        fontWeight: "bold",
-        color: "#007AFF",
-    },
-    budgetText: {
-        fontSize: 18,
-        fontWeight: "bold",
-        color: "#333",
-    },
-    listContainer: {
-        paddingBottom: 20,
-        paddingTop: 10,
-        paddingHorizontal: 10,
-    },
-    expenseItem: {
-        backgroundColor: "#fff",
-        borderRadius: 10,
-        padding: 15,
-        marginBottom: 10,
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        // iOS 
-        shadowColor: "#000",
-        shadowOffset: { width: 1, height:  7},
-        shadowOpacity: 0.25,
-        shadowRadius: 5,
-        // Android 
-        elevation: 5,
-    },
-    expenseTitle: {
-        fontSize: 16,
-        fontWeight: "600",
-        color: "#333",
-    },
-    expenseAmount: {
-        fontSize: 14,
-        color: "#777",
-    },
-    buttonsContainer: {
-        flexDirection: "row",
-        gap: 10,
-    },
-    btn: {
-        backgroundColor: "#eee",
-        paddingHorizontal: 15,
-        paddingVertical: 10,
-        borderRadius: 5,
-    },
+  container: { flex: 1, backgroundColor: "#f7f7f7", paddingHorizontal: 20, paddingTop: 20 },
+  header: { flexDirection: "row", justifyContent: "center", alignItems: "center", marginBottom: 20 },
+  budgetText: { fontSize: 18, fontWeight: "bold", color: "#333" },
+  listContainer: { paddingBottom: 20 },
+  expenseItem: { backgroundColor: "#fff", borderRadius: 10, padding: 15, marginBottom: 10, flexDirection: "row", justifyContent: "space-between", alignItems: "center", shadowColor: "#000", shadowOffset: { width: 1, height: 7 }, shadowOpacity: 0.25, shadowRadius: 5, elevation: 5 },
+  expenseTitle: { fontSize: 16, fontWeight: "600", color: "#333" },
+  expenseAmount: { fontSize: 14, color: "#777" },
+  buttonsContainer: { flexDirection: "row", gap: 10 },
+  btn: { paddingHorizontal: 15, paddingVertical: 8, borderRadius: 5 },
 });

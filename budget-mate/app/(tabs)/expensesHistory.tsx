@@ -1,112 +1,63 @@
-import React, {useState, useEffect, useCallback} from "react";
-import { View,  Text, FlatList, StyleSheet } from "react-native";
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { doneExpenses } from "../sharedData";
+import React, { useCallback, useState } from "react";
+import { View, Text, FlatList, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "expo-router";
+import { useBudget } from "../../constants/budgetContext";
 
 export default function ExpensesHistory() {
- const[data, setData] = useState(doneExpenses);
- const[total, setTotal] = useState(0);
- useFocusEffect(
-  useCallback(()=>{
-    console.log("Done expenses: ", doneExpenses)
-  setData([...doneExpenses]);
+  const { doneExpenses } = useBudget();
+  const [data, setData] = useState(doneExpenses);
+  const [total, setTotal] = useState(0);
 
-  const totalAmount = doneExpenses.reduce(
-    (sum, expense) => sum + Number(expense.amount), 0
+  useFocusEffect(
+    useCallback(() => {
+      setData(doneExpenses);
+      setTotal(doneExpenses.reduce((sum, e) => sum + e.amount, 0));
+    }, [doneExpenses])
   );
-  setTotal(totalAmount)
-}, []
- )
-);
+
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>✅ Expenses History</Text>
       <View style={styles.contentContainer}>
-      {data.length === 0 ? (
-        <Text style={styles.noExpenses}>No expenses done yet</Text>
-      ) : (
-        <>
-       <FlatList
-          data={data}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.expenseItem}>
-              <Text>{item.title}</Text>
-              <Text>${item.amount}</Text>
+        {data.length === 0 ? (
+          <Text style={styles.noExpenses}>No expenses done yet</Text>
+        ) : (
+          <>
+            <FlatList
+              data={data.sort((a,b)=>b.id.localeCompare(a.id))}
+              keyExtractor={item => item.id}
+              renderItem={({ item }) => (
+                <View style={styles.expenseItem}>
+                  <View>
+                    <Text style={styles.expenseTitle}>{item.category}</Text>
+                    <Text>{item.note}</Text>
+                    <Text>{item.payeeName}</Text>
+                    <Text>{item.date}</Text>
+                    <Text>{item.paymentType}</Text>
+                  </View>
+                  <Text style={styles.expenseAmount}>${item.amount}</Text>
+                </View>
+              )}
+            />
+            <View style={styles.total}>
+              <Text>Total spent:</Text>
+              <Text>${total}</Text>
             </View>
-          )}
-          />
-          <View style={styles.total}>
-        <Text>Total spent:</Text>
-        <Text>${total}</Text>
-       </View>
-       </>
-       )}
-       </View>
-      </SafeAreaView>
+          </>
+        )}
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-        flex: 1,
-        backgroundColor: "#f7f7f7",
-        paddingHorizontal: 20,
-        paddingTop: 20,
-    },
-    contentContainer:{
-     flex: 1,
-     justifyContent: "center",
-    },
-  title: { 
-    fontSize: 18, 
-    fontWeight: "bold", 
-    textAlign: "center",
-    marginBottom: 20, 
-    marginTop: 20
-  },
-  noExpenses:{
-   fontSize: 16,
-   textAlign: "center"
-  },
- expenseItem: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 10,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    // iOS 
-    shadowColor: "#000",
-    shadowOffset: { width: 1, height:  7},
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
-    // Android 
-    elevation: 5,
-    },
-  item: { 
-    flexDirection: "row", 
-    justifyContent: "space-between", 
-    padding: 10, 
-    backgroundColor: "#eee", 
-    marginBottom: 10, 
-    borderRadius: 8 
-  },
-  total: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    padding: 15,
-    backgroundColor: "#6DB993",
-    marginBottom: 10,
-    borderRadius: 8,
-    // iOS 
-    shadowColor: "#000",
-    shadowOffset: { width: 1, height:  7},
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
-    // Android 
-    elevation: 5,
-  }
+  container: { flex: 1, backgroundColor: "#f7f7f7", paddingHorizontal: 20, paddingTop: 20 },
+  title: { fontSize: 18, fontWeight: "bold", textAlign: "center", marginVertical: 20 },
+  contentContainer: { flex: 1 },
+  noExpenses: { fontSize: 16, textAlign: "center" },
+  expenseItem: { backgroundColor: "#fff", borderRadius: 10, padding: 15, marginBottom: 10, flexDirection: "row", justifyContent: "space-between", shadowColor: "#000", shadowOffset: { width: 1, height: 7 }, shadowOpacity: 0.25, shadowRadius: 5, elevation: 5 },
+  expenseTitle: { fontWeight: "bold" },
+  expenseAmount: { fontWeight: "bold", color: "#333" },
+  total: { flexDirection: "row", justifyContent: "space-between", padding: 15, backgroundColor: "#6DB993", borderRadius: 8, marginTop: 10 },
 });
