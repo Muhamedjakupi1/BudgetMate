@@ -6,7 +6,6 @@ import { useBudget } from "../../constants/budgetContext";
 export default function HomePage() {
   const { transactions, balance, deleteTransaction, markAsDone } = useBudget();
 
-  // Only show pending expenses
   const pendingExpenses = transactions.filter(t => t.type === "expense" && !t.done);
 
   const renderExpense = ({ item }: any) => (

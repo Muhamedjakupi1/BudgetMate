@@ -57,7 +57,6 @@ const AddTransaction: React.FC = () => {
 
     addTransaction(transaction);
 
-    // Reset form
     setAmount(''); setCategory(''); setNote(''); setPaymentType(''); setPayeeName('');
     setCategoryOpen(false); setPaymentOpen(false);
     console.log('Transaction saved:', transaction);
