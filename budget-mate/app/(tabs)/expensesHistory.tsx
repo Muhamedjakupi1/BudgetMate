@@ -22,7 +22,7 @@ export default function ExpensesHistory() {
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>✅ Expenses History</Text>
-      <View>
+      <View style={styles.contentContainer}>
       {data.length === 0 ? (
         <Text style={styles.noExpenses}>No expenses done yet</Text>
       ) : (
@@ -55,6 +55,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingTop: 20,
     },
+    contentContainer:{
+     flex: 1,
+     justifyContent: "center",
+    },
   title: { 
     fontSize: 18, 
     fontWeight: "bold", 
@@ -64,8 +68,7 @@ const styles = StyleSheet.create({
   },
   noExpenses:{
    fontSize: 16,
-   textAlign: "center",
-   marginTop: 300
+   textAlign: "center"
   },
  expenseItem: {
     backgroundColor: "#fff",
@@ -94,7 +97,7 @@ const styles = StyleSheet.create({
   total: {
     flexDirection: "row",
     justifyContent: "space-between",
-    padding: 10,
+    padding: 15,
     backgroundColor: "#6DB993",
     marginBottom: 10,
     borderRadius: 8,
