@@ -43,10 +43,6 @@ const Profile = () => {
             <Text style={styles.statLabel}>Done</Text>
           </View>
         </View>
-
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Edit Profile</Text>
-        </TouchableOpacity>
         <TouchableOpacity style={[styles.button,{backgroundColor: '#FF3B30'}]} onPress={handleLogout}>
           <Text style={styles.buttonText}>Logout</Text>
         </TouchableOpacity>
