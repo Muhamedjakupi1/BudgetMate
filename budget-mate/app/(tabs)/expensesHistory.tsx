@@ -100,7 +100,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#6DB993", 
     borderRadius: 8, 
     padding: 20,
-    marginTop: 10
+    marginTop: 10,
+    marginBottom: 10
   },
   rightColumn: {
     alignItems: "flex-end",
