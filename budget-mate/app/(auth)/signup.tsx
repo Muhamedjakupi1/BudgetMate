@@ -1,39 +1,53 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View, Switch, StatusBar } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { 
+  StyleSheet, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  View, 
+  Switch, 
+  StatusBar, 
+  ActivityIndicator 
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from "expo-router";
+import { useRouter } from 'expo-router';
+import * as Font from 'expo-font';
 
 export default function SignUpScreen() {
   const router = useRouter();
 
+  // 🔹 All hooks must be defined unconditionally at the top
+  const [fontsLoaded, setFontsLoaded] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
-
-
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync(Ionicons.font);
+      setFontsLoaded(true);
+    }
+    loadFonts();
+  }, []);
+
   const handleSignUp = () => {
-    // if (!name.trim() || !email.trim() || !password || !confirm) {
-    //   alert('Please fill in all fields');
-    //   return;
-    // }
+    if (!acceptedTerms) {
+      alert('Please accept the Terms & Conditions.');
+      return;
+    }
 
-    // if (password !== confirm) {
-    //   alert('Passwords do not match');
-    //   return;
-    // }
-
-    // if (!acceptedTerms) {
-    //   alert('Please accept the Terms & Conditions');
-    //   return;
-    // }
+    if (password !== confirm) {
+      alert('Passwords do not match.');
+      return;
+    }
 
     alert(`Account created for ${name}`);
     router.push('/(tabs)');
 
+    // Reset form
     setName('');
     setEmail('');
     setPassword('');
@@ -41,16 +55,27 @@ export default function SignUpScreen() {
     setAcceptedTerms(false);
   };
 
+  // 🔹 Safe to conditionally render *after* all hooks are defined
+  if (!fontsLoaded) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#22ab54" />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="white"></StatusBar>
+      <StatusBar barStyle="dark-content" backgroundColor="white" />
+      
       <View style={styles.card}>
         <Text style={styles.title}>Sign Up</Text>
 
-        <View style={{ position: 'relative' }}>
-          <Ionicons name="person-outline" size={20} color="#444" style={{ position: 'absolute', top: 14, left: 12 }} />
+        {/* Full Name */}
+        <View style={styles.iconInputContainer}>
+          <Ionicons name="person-outline" size={20} color="#444" style={styles.icon} />
           <TextInput
-            style={[styles.input, { paddingLeft: 38 }]}
+            style={[styles.input, styles.inputWithIcon]}
             placeholder="Full Name"
             value={name}
             onChangeText={setName}
@@ -58,10 +83,11 @@ export default function SignUpScreen() {
           />
         </View>
 
-        <View style={{ position: 'relative' }}>
-          <Ionicons name="mail-outline" size={20} color="#444" style={{ position: 'absolute', top: 14, left: 12 }} />
+        {/* Email */}
+        <View style={styles.iconInputContainer}>
+          <Ionicons name="mail-outline" size={20} color="#444" style={styles.icon} />
           <TextInput
-            style={[styles.input, { paddingLeft: 38 }]}
+            style={[styles.input, styles.inputWithIcon]}
             placeholder="Email"
             value={email}
             onChangeText={setEmail}
@@ -71,10 +97,11 @@ export default function SignUpScreen() {
           />
         </View>
 
-        <View style={{ position: 'relative' }}>
-          <Ionicons name="lock-closed-outline" size={20} color="#444" style={{ position: 'absolute', top: 14, left: 12 }} />
+        {/* Password */}
+        <View style={styles.iconInputContainer}>
+          <Ionicons name="lock-closed-outline" size={20} color="#444" style={styles.icon} />
           <TextInput
-            style={[styles.input, { paddingLeft: 38 }]}
+            style={[styles.input, styles.inputWithIcon]}
             placeholder="Password"
             value={password}
             onChangeText={setPassword}
@@ -83,10 +110,11 @@ export default function SignUpScreen() {
           />
         </View>
 
-        <View style={{ position: 'relative' }}>
-          <Ionicons name="lock-open-outline" size={20} color="#444" style={{ position: 'absolute', top: 14, left: 12 }} />
+        {/* Confirm Password */}
+        <View style={styles.iconInputContainer}>
+          <Ionicons name="lock-open-outline" size={20} color="#444" style={styles.icon} />
           <TextInput
-            style={[styles.input, { paddingLeft: 38 }]}
+            style={[styles.input, styles.inputWithIcon]}
             placeholder="Confirm Password"
             value={confirm}
             onChangeText={setConfirm}
@@ -95,7 +123,7 @@ export default function SignUpScreen() {
           />
         </View>
 
-    
+        {/* Terms */}
         <View style={styles.termsContainer}>
           <Switch
             value={acceptedTerms}
@@ -107,10 +135,12 @@ export default function SignUpScreen() {
           </Text>
         </View>
 
+        {/* Submit Button */}
         <TouchableOpacity onPress={handleSignUp} style={styles.button}>
           <Text style={styles.buttonText}>Create Account</Text>
         </TouchableOpacity>
 
+        {/* Footer */}
         <View style={styles.footerRow}>
           <Text style={styles.small}>Already have an account?</Text>
           <TouchableOpacity onPress={() => router.push('/signin')}>
@@ -123,6 +153,11 @@ export default function SignUpScreen() {
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff',
@@ -152,6 +187,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#444',
     color: '#000',
+  },
+  inputWithIcon: {
+    paddingLeft: 38,
+  },
+  iconInputContainer: {
+    position: 'relative',
+  },
+  icon: {
+    position: 'absolute',
+    top: 14,
+    left: 12,
   },
   button: {
     marginTop: 12,
