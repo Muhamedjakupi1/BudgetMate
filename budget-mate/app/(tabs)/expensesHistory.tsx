@@ -70,7 +70,8 @@ const styles = StyleSheet.create({
  },
  noExpenses: { 
   fontSize: 16, 
-  textAlign: "center"
+  textAlign: "center",
+  marginTop: 300
  },
   expenseItem: { 
     backgroundColor: "#fff", 
