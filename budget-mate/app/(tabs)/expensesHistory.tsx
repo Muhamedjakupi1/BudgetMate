@@ -29,14 +29,16 @@ export default function ExpensesHistory() {
               keyExtractor={item => item.id}
               renderItem={({ item }) => (
                 <View style={styles.expenseItem}>
-                  <View>
+                  <View style={{flex: 1}}>
                     <Text style={styles.expenseTitle}>{item.category}</Text>
-                    <Text>{item.note}</Text>
-                    <Text>{item.payeeName}</Text>
                     <Text>{item.date}</Text>
-                    <Text>{item.paymentType}</Text>
-                  </View>
+                    <Text>{item.note}</Text>
+                   </View>
+                   <View style = { styles.rightColumn}>
                   <Text style={styles.expenseAmount}>${item.amount}</Text>
+                  <Text>{item.payeeName}</Text>
+                   <Text>{item.paymentType}</Text>
+                   </View>
                 </View>
               )}
             />
@@ -52,12 +54,56 @@ export default function ExpensesHistory() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f7f7f7", paddingHorizontal: 20, paddingTop: 20 },
-  title: { fontSize: 18, fontWeight: "bold", textAlign: "center", marginVertical: 20 },
-  contentContainer: { flex: 1 },
-  noExpenses: { fontSize: 16, textAlign: "center" },
-  expenseItem: { backgroundColor: "#fff", borderRadius: 10, padding: 15, marginBottom: 10, flexDirection: "row", justifyContent: "space-between", shadowColor: "#000", shadowOffset: { width: 1, height: 7 }, shadowOpacity: 0.25, shadowRadius: 5, elevation: 5 },
-  expenseTitle: { fontWeight: "bold" },
-  expenseAmount: { fontWeight: "bold", color: "#333" },
-  total: { flexDirection: "row", justifyContent: "space-between", padding: 15, backgroundColor: "#6DB993", borderRadius: 8, marginTop: 10 },
+  container: { flex: 1, 
+    backgroundColor: "#f7f7f7", 
+    paddingHorizontal: 20, 
+    paddingTop: 20 
+  },
+  title: { 
+    fontSize: 18, 
+    fontWeight: "bold", 
+    textAlign: "center", 
+    marginVertical: 20 
+  },
+   contentContainer: { 
+    flex: 1
+ },
+ noExpenses: { 
+  fontSize: 16, 
+  textAlign: "center"
+ },
+  expenseItem: { 
+    backgroundColor: "#fff", 
+    borderRadius: 10, 
+    padding: 15, 
+    marginBottom: 10, 
+    flexDirection: "row", 
+    justifyContent: "space-between", 
+    shadowColor: "#000", 
+    shadowOffset: { width: 1, height: 7 }, 
+    shadowOpacity: 0.25, 
+    shadowRadius: 5, 
+    elevation: 5 
+  },
+  expenseTitle: { 
+    fontWeight: "bold",
+    fontSize: 20,
+  },
+  expenseAmount: { 
+    fontWeight: "bold",
+    fontSize: 20, 
+  },
+  total: { 
+    flexDirection: "row", 
+    justifyContent: "space-between",  
+    backgroundColor: "#6DB993", 
+    borderRadius: 8, 
+    padding: 20,
+    marginTop: 10
+  },
+  rightColumn: {
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+  }
+ 
 });
