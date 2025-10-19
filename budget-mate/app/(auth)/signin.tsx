@@ -1,13 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View, StatusBar, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from "expo-router";
+import * as Font from 'expo-font';
 
 export default function SignInScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fontsLoaded, setFontsLoaded] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    Font.loadAsync(Ionicons.font).then(() => setFontsLoaded(true));
+  }, []);
+
+  if (!fontsLoaded) {
+    return null; 
+  }
 
   const handleLogin = () => {
     if (!email.trim() || !password.trim()) {
@@ -22,6 +32,8 @@ export default function SignInScreen() {
 
     setEmail('');
     setPassword('');
+
+
   };
 
   return (
@@ -30,10 +42,10 @@ export default function SignInScreen() {
       <View style={styles.card}>
         <Text style={styles.title}>Log In</Text>
 
-        <View style={{ position: 'relative' }}>
-          <Ionicons name="mail-outline" size={20} color="#444" style={{ position: 'absolute', top: 14, left: 12 }} />
+        <View style={styles.inputRow}>
+          <Ionicons name="mail-outline" size={20} color="#444" style={styles.icon} />
           <TextInput
-            style={[styles.input, { paddingLeft: 38 }]}
+            style={styles.inputFlex}
             placeholder="Email"
             value={email}
             onChangeText={setEmail}
@@ -43,10 +55,10 @@ export default function SignInScreen() {
           />
         </View>
 
-        <View style={{ position: 'relative' }}>
-          <Ionicons name="lock-closed-outline" size={20} color="#444" style={{ position: 'absolute', top: 14, left: 12 }} />
+        <View style={styles.inputRow}>
+          <Ionicons name="lock-closed-outline" size={20} color="#444" style={styles.icon} />
           <TextInput
-            style={[styles.input, { paddingLeft: 38 }]}
+            style={styles.inputFlex}
             placeholder="Password"
             value={password}
             onChangeText={setPassword}
@@ -91,16 +103,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
-  input: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#444',
-    color: '#000',
-  },
   button: {
     marginTop: 12,
     backgroundColor: '#22ab54',
@@ -125,4 +127,22 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 6,
   },
+  inputRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  borderWidth: 1,
+  borderColor: '#ddd',
+  borderRadius: 8,
+  paddingHorizontal: 10,
+  marginBottom: 12,
+  backgroundColor: '#fff',
+},
+icon: {
+  marginRight: 8,
+},
+inputFlex: {
+  flex: 1,
+  height: 45,
+  color: '#333',
+},
 });
