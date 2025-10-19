@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View, StatusBar, Alert } from 'react-native';
+import { 
+  StyleSheet, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  View, 
+  StatusBar, 
+  Alert 
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from "expo-router";
@@ -25,15 +33,10 @@ export default function SignInScreen() {
       return;
     }
 
-
     Alert.alert('Welcome back!', `Logged in as ${email}`);
-
     router.push('/(tabs)');
-
     setEmail('');
     setPassword('');
-
-
   };
 
   return (
@@ -86,63 +89,69 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 20,
   },
+
+  // 🟢 Updated card to match SignUp
   card: {
-    width: '100%',
-    backgroundColor: '#fff',
+    backgroundColor: 'white',
+    borderRadius: 16,
     padding: 20,
-    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
   },
+
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '700',
-    color: '#000',
-    marginBottom: 20,
+    color: '#222',
     textAlign: 'center',
-  },
-  button: {
-    marginTop: 12,
-    backgroundColor: '#22ab54',
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: '700',
-  },
-  footerRow: {
-    marginTop: 14,
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  small: {
-    color: '#444',
-  },
-  link: {
-    color: '#22c55e',
-    fontWeight: '600',
-    marginLeft: 6,
+    marginBottom: 24,
   },
   inputRow: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  borderWidth: 1,
-  borderColor: '#ddd',
-  borderRadius: 8,
-  paddingHorizontal: 10,
-  marginBottom: 12,
-  backgroundColor: '#fff',
-},
-icon: {
-  marginRight: 8,
-},
-inputFlex: {
-  flex: 1,
-  height: 45,
-  color: '#333',
-},
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginBottom: 12,
+    backgroundColor: '#fff',
+  },
+  icon: {
+    marginRight: 8,
+  },
+  inputFlex: {
+    flex: 1,
+    height: 45,
+    color: '#333',
+  },
+  button: {
+    backgroundColor: '#22ab54',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  footerRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 15,
+  },
+  small: {
+    color: '#555',
+  },
+  link: {
+    color: '#22ab54',
+    fontWeight: '600',
+    marginLeft: 4,
+  },
 });
