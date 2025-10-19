@@ -5,7 +5,7 @@ import FormInput from '../../components/ui/textinput';
 import { useBudget, Transaction } from "../../constants/budgetContext";
 
 const categoryColors: Record<string, string> = {
-  Transport: '#E53935', 'Food and Drink': '#FDD835', 'Home Bills': '#43A047',
+  Transport: '#E53935', 'Food and Drink': '#FDD835', 'Home Bills': '#518e59ff',
   Entertainment: '#1E88E5', Shopping: '#8E24AA', Health: '#D81B60', Other: '#757575',
   Salary: '#FF5722', Freelance: '#FFC107', Investment: '#4CAF50', Gift: '#03A9F4',
 };
@@ -102,7 +102,7 @@ const AddTransaction: React.FC = () => {
               {isPaymentOpen && (
                 <View style={styles.dropdownList}>
                   {paymentOptions.map(opt => (
-                    <TouchableOpacity key={opt} style={[styles.dropdownItem, { backgroundColor: '#888' }]} onPress={() => { setPaymentType(opt); setPaymentOpen(false); }}>
+                    <TouchableOpacity key={opt} style={[styles.dropdownItem, { backgroundColor: '#518e59ff' }]} onPress={() => { setPaymentType(opt); setPaymentOpen(false); }}>
                       <Text style={{ color: 'white', fontWeight: '600' }}>{opt}</Text>
                     </TouchableOpacity>
                   ))}
@@ -117,8 +117,9 @@ const AddTransaction: React.FC = () => {
           )}
 
           <View style={{ marginTop: 20 }}>
-            <Button title="Save Transaction" onPress={handleSave} color={Platform.OS === 'ios' ? '#007AFF' : '#4ECDC4'} />
+             <Button title="Save Transaction" onPress={handleSave} color="#518e59ff" />
           </View>
+
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -130,7 +131,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 16, paddingTop: 16 },
   navbar: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 12, backgroundColor: '#e0e0e0', borderRadius: 8, marginBottom: 16 },
   navItem: { flex: 1, paddingVertical: 10, marginHorizontal: 10, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  activeNav: { backgroundColor: '#8080ff' },
+  activeNav: { backgroundColor: '#518e59ff'},
   navText: { fontWeight: 'bold', color: '#000' },
   form: { paddingBottom: 40 },
   label: { fontWeight: '600', marginTop: 12, marginBottom: 4, fontSize: 16, color: '#333' },
