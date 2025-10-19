@@ -1,4 +1,4 @@
-# BudgetMate - Personal Budget Tracker
+# Gr.20 - BudgetMate (Personal Budget Tracker)
 
 A mobile application built with React Native to help you manage your personal finances, track expenses, and monitor your budget effectively.
 
