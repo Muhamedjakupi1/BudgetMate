@@ -93,7 +93,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
 
-  // 🟢 Updated card to match SignUp
   card: {
     backgroundColor: 'white',
     borderRadius: 16,

@@ -82,7 +82,6 @@ export default function SignUpScreen() {
       <View style={styles.card}>
         <Text style={styles.title}>Sign Up</Text>
 
-
         <View style={styles.inputRow}>
           <Ionicons name="person-outline" size={20} color="#444" style={styles.icon} />
           <TextInput
