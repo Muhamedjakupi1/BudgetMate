@@ -55,7 +55,7 @@ export default function SignInScreen() {
 
    const handleLogin = async () => {
     if (!validateInputs()) return;
-    setFontsLoaded(true); // start loading
+    setFontsLoaded(true);
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
