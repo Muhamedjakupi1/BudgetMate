@@ -10,8 +10,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../../firebase';
+import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '../../firebase';
 import { useRouter } from "expo-router";
 import * as Font from 'expo-font';
 
@@ -67,6 +67,17 @@ export default function SignInScreen() {
   setLoading(false);
 };
 
+  const handleGoogleLogin = async () => {
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    const user = result.user;
+    Alert.alert("Welcome", `Logged in as ${user.displayName}`);
+    router.push('../(tabs)');
+  } catch (err: any) { 
+    setError(err?.message || "An error occurred");
+  }
+};
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="white" />
@@ -101,6 +112,14 @@ export default function SignInScreen() {
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
                 <Text style={styles.buttonText}>{loading ? "Signing in..." : "Sign in"}</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
+  <View style={styles.googleContent}>
+    <Ionicons name="logo-google" size={20} color="#4285F4" style={styles.googleIcon} />
+    <Text style={styles.googleText}>Sign in with Google</Text>
+  </View>
+</TouchableOpacity>
+
 
         <View style={styles.footerRow}>
           <Text style={styles.small}>Don't have an account?</Text>
@@ -186,4 +205,36 @@ const styles = StyleSheet.create({
     marginTop: 10, 
     textAlign: "center"
   },
+  googleButton: {
+  backgroundColor: '#fff',
+  borderWidth: 1,
+  borderColor: '#ddd',
+  borderRadius: 8,
+  paddingVertical: 10,
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexDirection: 'row',
+  marginTop: 10,
+  shadowColor: '#000',
+  shadowOpacity: 0.05,
+  shadowRadius: 3,
+  elevation: 1,
+},
+
+googleContent: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+googleIcon: {
+  marginRight: 10,
+},
+
+googleText: {
+  color: '#444',
+  fontSize: 16,
+  fontWeight: '500',
+},
+
 });
