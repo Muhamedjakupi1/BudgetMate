@@ -3,17 +3,23 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import React from 'react';
 import { router } from 'expo-router';
 import { useBudget } from "../../constants/budgetContext";
+import { auth } from "../../firebase";
+
 
 const Profile = () => {
   const { balance, doneExpenses } = useBudget();
   const totalSpent = doneExpenses.reduce((sum, t) => sum + t.amount, 0);
   const totalDoneExpenses = doneExpenses.length;
 
-  const user = {
-    name: "Besa Gashi",
-    email: "BesaGashi@example.com",
-    profilePic: require('../../assets/images/budgetmate-logo.png'),
-  };
+  const currentUser = auth.currentUser;
+
+const user = {
+  name: currentUser?.displayName || "No Name",
+  email: currentUser?.email || "No Email",
+  profilePic: currentUser?.photoURL
+    ? { uri: currentUser.photoURL }
+    : require('../../assets/images/budgetmate-logo.png'),
+};
 
   const handleLogout = () => {
     router.replace(".././(auth)");

@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Font from 'expo-font';
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import { updateProfile } from "firebase/auth";
 import { auth, db } from "../../firebase";
 import { doc, setDoc } from "firebase/firestore";
 
@@ -87,21 +88,27 @@ export default function SignUpScreen() {
 
 
   const handleSignUp = async () => {
-    if(!validateInputs()) return;
-    setLoading(true);
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      setLoading(false);
-      setModalVisible(true);
-    } catch (error: any) {
-      if(error.code === 'auth/email-already-in-use') {
-        setErrors({ email: 'Email is already in use' });
-      } else {
-        setErrors({ email: 'Failed to create account. Please try again.' });
-      }
-      setLoading(false);
+  if (!validateInputs()) return;
+  setLoading(true);
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user; 
+
+    await updateProfile(user, {
+      displayName: name, 
+    });
+
+    setLoading(false);
+    setModalVisible(true);
+  } catch (error: any) {
+    if (error.code === 'auth/email-already-in-use') {
+      setErrors({ email: 'Email is already in use' });
+    } else {
+      setErrors({ email: 'Failed to create account. Please try again.' });
     }
-  };
+    setLoading(false);
+  }
+};
 
   if (!fontsLoaded) {
     return (
