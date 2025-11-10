@@ -20,6 +20,7 @@ export default function SignInScreen() {
   const [password, setPassword] = useState('');
   const [fontsLoaded, setFontsLoaded] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -43,35 +44,29 @@ export default function SignInScreen() {
     }
 
     setError("");
-
-    Alert.alert('Welcome back!', `Logged in as ${email}`);
-    router.push('/(tabs)');
-
-    setEmail('');
-    setPassword('');
-
     return true;
   };
 
    const handleLogin = async () => {
-    if (!validateInputs()) return;
-    setFontsLoaded(true);
-
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push("/");
-    } catch (error:any) {
-      if (error.code === "auth/invalid-credential") {
-        setError("Incorrect email or password");
-      } else {
-        setError(error.message);
-      }
-      
-    } finally {
-      setFontsLoaded(false);
+  if (!validateInputs()) return;
+    setLoading(true);
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    Alert.alert('Welcome back!', `Logged in as ${email}`);
+    router.push('../(tabs)'); 
+    setLoading(false);
+    setEmail('');
+    setPassword('');
+  } catch (error: any) {
+    if (error.code === "auth/invalid-credential") {
+      setError("Incorrect email or password");
+    } else {
+      setError(error.message);
     }
-
   }
+  setLoading(false);
+};
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="white" />
@@ -102,10 +97,10 @@ export default function SignInScreen() {
             placeholderTextColor="#aaa"
           />
         </View>
-
-        <TouchableOpacity onPress={handleLogin} style={styles.button}>
-          <Text style={styles.buttonText}>Sign In</Text>
-        </TouchableOpacity>
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+                <Text style={styles.buttonText}>{loading ? "Signing in..." : "Sign in"}</Text>
+            </TouchableOpacity>
 
         <View style={styles.footerRow}>
           <Text style={styles.small}>Don't have an account?</Text>
@@ -185,5 +180,10 @@ const styles = StyleSheet.create({
     color: '#22ab54',
     fontWeight: '600',
     marginLeft: 4,
+  },
+  error: { 
+    color: "red", 
+    marginTop: 10, 
+    textAlign: "center"
   },
 });
