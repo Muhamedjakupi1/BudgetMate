@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../../firebase';
 import { useRouter } from "expo-router";
 import * as Font from 'expo-font';
 
@@ -17,7 +19,7 @@ export default function SignInScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fontsLoaded, setFontsLoaded] = useState(false);
-  const [error, setError] = useState("")
+  const [error, setError] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -39,7 +41,7 @@ export default function SignInScreen() {
       setError("Email is not valid! Please check again.");
       return false;
     }
-    
+
     setError("");
 
     Alert.alert('Welcome back!', `Logged in as ${email}`);
@@ -48,9 +50,28 @@ export default function SignInScreen() {
     setEmail('');
     setPassword('');
 
-    return true;    
+    return true;
   };
 
+   const handleLogin = async () => {
+    if (!validateInputs()) return;
+    setFontsLoaded(true); // start loading
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      router.push("/");
+    } catch (error:any) {
+      if (error.code === "auth/invalid-credential") {
+        setError("Incorrect email or password");
+      } else {
+        setError(error.message);
+      }
+      
+    } finally {
+      setFontsLoaded(false);
+    }
+
+  }
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="white" />
@@ -82,7 +103,7 @@ export default function SignInScreen() {
           />
         </View>
 
-        <TouchableOpacity onPress={validateInputs} style={styles.button}>
+        <TouchableOpacity onPress={handleLogin} style={styles.button}>
           <Text style={styles.buttonText}>Sign In</Text>
         </TouchableOpacity>
 
