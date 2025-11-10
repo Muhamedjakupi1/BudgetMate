@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  View, 
-  StatusBar, 
-  Alert 
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  StatusBar,
+  Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,6 +17,7 @@ export default function SignInScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fontsLoaded, setFontsLoaded] = useState(false);
+  const [error, setError] = useState("")
   const router = useRouter();
 
   useEffect(() => {
@@ -24,19 +25,30 @@ export default function SignInScreen() {
   }, []);
 
   if (!fontsLoaded) {
-    return null; 
+    return null;
   }
 
-  const handleLogin = () => {
+  const validateInputs = () => {
     if (!email.trim() || !password.trim()) {
       Alert.alert('Error', 'Please fill in all fields');
-      return;
+      return false;
     }
+
+    const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Email is not valid! Please check again.");
+      return false;
+    }
+    
+    setError("");
 
     Alert.alert('Welcome back!', `Logged in as ${email}`);
     router.push('/(tabs)');
+
     setEmail('');
     setPassword('');
+
+    return true;    
   };
 
   return (
@@ -70,7 +82,7 @@ export default function SignInScreen() {
           />
         </View>
 
-        <TouchableOpacity onPress={handleLogin} style={styles.button}>
+        <TouchableOpacity onPress={validateInputs} style={styles.button}>
           <Text style={styles.buttonText}>Sign In</Text>
         </TouchableOpacity>
 
