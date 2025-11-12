@@ -95,7 +95,16 @@ export default function SignUpScreen() {
     const user = userCredential.user; 
 
     await updateProfile(user, {
-      displayName: name, 
+      displayName: name,
+    });
+
+    const userRef = doc(db, "users", user.uid);
+    await setDoc(userRef, {
+      displayName: name,
+      email: email,
+      overallBudget: 0,
+      amountSpent: 0, 
+      createdAt: new Date()
     });
 
     setLoading(false);
@@ -109,6 +118,7 @@ export default function SignUpScreen() {
     setLoading(false);
   }
 };
+
 
   if (!fontsLoaded) {
     return (

@@ -14,6 +14,8 @@ import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../../firebase';
 import { useRouter } from "expo-router";
 import * as Font from 'expo-font';
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../../firebase";
 
 export default function SignInScreen() {
   const [email, setEmail] = useState('');
@@ -49,23 +51,28 @@ export default function SignInScreen() {
 
    const handleLogin = async () => {
   if (!validateInputs()) return;
-    setLoading(true);
+  setLoading(true);
+  setError('');
+
   try {
-    await signInWithEmailAndPassword(auth, email, password);
-    Alert.alert('Welcome back!', `Logged in as ${email}`);
-    router.push('../(tabs)'); 
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    const userRef = doc(db, 'users', user.uid);
+    const userSnap = await getDoc(userRef);
+
+    console.log('Logged in user:', user.uid, user.email, userSnap.data());
+
+    alert(`Welcome ${user.email}`);
+    router.push('../(tabs)');
+  } catch (err: any) {
+    console.error('Login error', err);
+    setError(err.message || 'Login failed');
+  } finally {
     setLoading(false);
-    setEmail('');
-    setPassword('');
-  } catch (error: any) {
-    if (error.code === "auth/invalid-credential") {
-      setError("Incorrect email or password");
-    } else {
-      setError(error.message);
-    }
   }
-  setLoading(false);
 };
+
 
   const handleGoogleLogin = async () => {
   try {
