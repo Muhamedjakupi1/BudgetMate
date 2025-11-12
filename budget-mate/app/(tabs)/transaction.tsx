@@ -5,6 +5,7 @@ import FormInput from '../../components/ui/textinput';
 import { doc, getDoc, addDoc, collection, updateDoc, getDocs } from "firebase/firestore";
 import { db } from "../../firebase";
 import { useAuth } from '../../context/AuthContext';
+import StatusModal from '../../components/ui/statusModal'
 
 const categoryColors: Record<string, string> = {
   Transport: '#E53935',
@@ -34,6 +35,9 @@ const AddTransaction: React.FC = () => {
   const [payeeName, setPayeeName] = useState('');
   const [isCategoryOpen, setCategoryOpen] = useState(false);
   const [isPaymentOpen, setPaymentOpen] = useState(false);
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [statusType, setStatusType] = useState<"success" | "error">("success");
 
   const handleSave = async () => {
     const numAmount = parseFloat(amount);
@@ -96,10 +100,24 @@ const AddTransaction: React.FC = () => {
       setCategoryOpen(false);
       setPaymentOpen(false);
 
-      alert('Transaction saved successfully!');
+      setStatusType("success");
+      setSuccessModalVisible(true);
+      if (type === 'expense') {
+        setSuccessMessage("Expense has been saved successfully!");
+      } else {
+        setSuccessMessage("Income has been saved successfully!");
+      }
+      setTimeout(() => {
+        setSuccessModalVisible(false);
+      }, 1500);
     } catch (error) {
       console.error('Error saving transaction:', error);
-      alert('Failed to save transaction!');
+      setStatusType("error");
+      setSuccessMessage("Couldn't save transaction. Check budget and try again.");
+      setSuccessModalVisible(true);
+      setTimeout(() => {
+        setSuccessModalVisible(false);
+      }, 1500);
     }
   };
 
@@ -107,7 +125,7 @@ const AddTransaction: React.FC = () => {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="white" />
       <View style={styles.container}>
-        {/* Navbar */}
+
         <View style={styles.navbar}>
           <TouchableOpacity
             style={[styles.navItem, type === 'expense' && styles.activeNav]}
@@ -123,7 +141,6 @@ const AddTransaction: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Form */}
         <ScrollView contentContainerStyle={styles.form}>
           <Text style={styles.label}>Amount</Text>
           <FormInput
@@ -196,6 +213,12 @@ const AddTransaction: React.FC = () => {
           </View>
         </ScrollView>
       </View>
+
+      <StatusModal
+        visible={successModalVisible}
+        message={successMessage}
+        type={statusType}
+      />
     </SafeAreaView>
   );
 };

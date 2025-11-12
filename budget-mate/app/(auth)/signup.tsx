@@ -7,8 +7,7 @@ import {
   View,
   Switch,
   StatusBar,
-  ActivityIndicator,
-  Modal
+  ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,7 +17,7 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { updateProfile } from "firebase/auth";
 import { auth, db } from "../../firebase";
 import { doc, setDoc } from "firebase/firestore";
-
+import StatusModal from '../../components/ui/statusModal'
 
 type Errors = {
   name?: string;
@@ -40,6 +39,8 @@ export default function SignUpScreen() {
   const [errors, setErrors] = useState<Errors>({});
   const [loading, setLoading] = useState(false);
   const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [statusType, setStatusType] = useState<"success" | "error">("success");
 
   useEffect(() => {
     async function loadFonts() {
@@ -109,15 +110,27 @@ export default function SignUpScreen() {
       });
 
       setLoading(false);
+      setStatusType("success");
       setSuccessModalVisible(true);
+      setSuccessMessage("Successfully Signed Up!");
       setTimeout(() => {
         handleModalClose();
       }, 1500);
     } catch (error: any) {
       if (error.code === 'auth/email-already-in-use') {
-        setErrors({ email: 'Email is already in use' });
+        setStatusType("error");
+        setSuccessMessage(error.message || "Email is already in use");
+        setSuccessModalVisible(true);
+        setTimeout(() => {
+          setSuccessModalVisible(false);
+        }, 1500);
       } else {
-        setErrors({ email: 'Failed to create account. Please try again.' });
+        setStatusType("error");
+        setSuccessMessage(error.message || "Failed to create account. Please try again.");
+        setSuccessModalVisible(true);
+        setTimeout(() => {
+          setSuccessModalVisible(false);
+        }, 1500);
       }
       setLoading(false);
     }
@@ -229,18 +242,13 @@ export default function SignUpScreen() {
           </TouchableOpacity>
         </View>
       </View>
-      <Modal
-        transparent
+
+      <StatusModal
         visible={successModalVisible}
-        animationType="fade"
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Ionicons name="checkmark-circle-outline" size={30} color="#22ab54" />
-            <Text style={styles.modalText}>Successfully Signed Up!</Text>
-          </View>
-        </View>
-      </Modal>
+        message={successMessage}
+        type={statusType}
+      />
+
     </SafeAreaView>
   );
 }
@@ -329,24 +337,6 @@ const styles = StyleSheet.create({
     color: 'red',
     fontSize: 12,
     marginBottom: 8,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    padding: 30,
-    borderRadius: 16,
-    alignItems: 'center'
-  },
-  modalText: {
-    marginTop: 10,
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#22ab54'
   },
 });
 

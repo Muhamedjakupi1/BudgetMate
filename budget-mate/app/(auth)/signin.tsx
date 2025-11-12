@@ -6,8 +6,7 @@ import {
   TouchableOpacity,
   View,
   StatusBar,
-  Alert,
-  Modal
+  Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,6 +16,7 @@ import { useRouter } from "expo-router";
 import * as Font from 'expo-font';
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../firebase";
+import StatusModal from '../../components/ui/statusModal';
 
 export default function SignInScreen() {
   const [email, setEmail] = useState('');
@@ -26,6 +26,9 @@ export default function SignInScreen() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [statusType, setStatusType] = useState<"success" | "error">("success");
+
 
   useEffect(() => {
     Font.loadAsync(Ionicons.font).then(() => setFontsLoaded(true));
@@ -51,49 +54,57 @@ export default function SignInScreen() {
     return true;
   };
 
-   const handleLogin = async () => {
-  if (!validateInputs()) return;
-  setLoading(true);
-  setError('');
+  const handleLogin = async () => {
+    if (!validateInputs()) return;
+    setLoading(true);
+    setError('');
 
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-    const userRef = doc(db, 'users', user.uid);
-    const userSnap = await getDoc(userRef);
+      const userRef = doc(db, 'users', user.uid);
+      const userSnap = await getDoc(userRef);
 
-    console.log('Logged in user:', user.uid, user.email, userSnap.data());
-    setSuccessModalVisible(true);
+      console.log('Logged in user:', user.uid, user.email, userSnap.data());
+      setStatusType("success");
+      setSuccessModalVisible(true);
+      setSuccessMessage("Successfully Signed In!");
 
-    setTimeout(() => {
+      setTimeout(() => {
         setSuccessModalVisible(false);
         router.push('../(tabs)');
       }, 1500);
-  } catch (err: any) {
-    console.error('Login error', err);
-    setError(err.message || 'Login failed');
-  } finally {
-    setLoading(false);
-  }
-};
+    } catch (err: any) {
+      console.error('Login error', err);
+      setStatusType("error");
+      setSuccessMessage(err.message || "Login failed");
+      setSuccessModalVisible(true);
+      setTimeout(() => {
+        setSuccessModalVisible(false);
+      }, 1500);
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   const handleGoogleLogin = async () => {
-  try {
-    const result = await signInWithPopup(auth, googleProvider);
-    const user = result.user;
-    
-    setSuccessModalVisible(true);
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+
+      setSuccessModalVisible(true);
+      setSuccessMessage("Successfully Signed In!");
       setTimeout(() => {
         setSuccessModalVisible(false);
         router.push('../(tabs)');
       }, 1500);
 
-  } catch (err: any) { 
-    setError(err?.message || "An error occurred");
-  }
-};
+    } catch (err: any) {
+      setError(err?.message || "An error occurred");
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -127,15 +138,15 @@ export default function SignInScreen() {
         </View>
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
-                <Text style={styles.buttonText}>{loading ? "Signing in..." : "Sign in"}</Text>
-            </TouchableOpacity>
+          <Text style={styles.buttonText}>{loading ? "Signing in..." : "Sign in"}</Text>
+        </TouchableOpacity>
 
-            <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
-  <View style={styles.googleContent}>
-    <Ionicons name="logo-google" size={20} color="#4285F4" style={styles.googleIcon} />
-    <Text style={styles.googleText}>Sign in with Google</Text>
-  </View>
-</TouchableOpacity>
+        <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
+          <View style={styles.googleContent}>
+            <Ionicons name="logo-google" size={20} color="#4285F4" style={styles.googleIcon} />
+            <Text style={styles.googleText}>Sign in with Google</Text>
+          </View>
+        </TouchableOpacity>
 
 
         <View style={styles.footerRow}>
@@ -146,18 +157,11 @@ export default function SignInScreen() {
         </View>
       </View>
 
-      <Modal
-        transparent
+      <StatusModal
         visible={successModalVisible}
-        animationType="fade"
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Ionicons name="checkmark-circle-outline" size={30} color="#22ab54" />
-            <Text style={styles.modalText}>Successfully Signed In!</Text>
-          </View>
-        </View>
-      </Modal>
+        message={successMessage}
+        type={statusType}
+      />
 
     </SafeAreaView>
   );
@@ -231,56 +235,41 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 4,
   },
-  error: { 
-    color: "red", 
-    marginTop: 10, 
+  error: {
+    color: "red",
+    marginTop: 10,
     textAlign: "center"
   },
   googleButton: {
-  backgroundColor: '#fff',
-  borderWidth: 1,
-  borderColor: '#ddd',
-  borderRadius: 8,
-  paddingVertical: 10,
-  alignItems: 'center',
-  justifyContent: 'center',
-  flexDirection: 'row',
-  marginTop: 10,
-  shadowColor: '#000',
-  shadowOpacity: 0.05,
-  shadowRadius: 3,
-  elevation: 1,
-},
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    marginTop: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
+  },
 
-googleContent: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'center',
-},
+  googleContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
-googleIcon: {
-  marginRight: 10,
-},
+  googleIcon: {
+    marginRight: 10,
+  },
 
-googleText: {
-  color: '#444',
-  fontSize: 16,
-  fontWeight: '500',
-},
+  googleText: {
+    color: '#444',
+    fontSize: 16,
+    fontWeight: '500',
+  },
 
-modalOverlay: { 
-  flex:1, 
-  backgroundColor:'rgba(0,0,0,0.3)', 
-  justifyContent:'center', 
-  alignItems:'center' },
-  modalContent: { 
-    backgroundColor:'#fff', 
-    padding:30, 
-    borderRadius:16, 
-    alignItems:'center' },
-  modalText: { 
-    marginTop:10, 
-    fontSize:18, 
-    fontWeight:'600', 
-    color:'#22ab54' },
 });
