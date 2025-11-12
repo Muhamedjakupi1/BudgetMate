@@ -22,7 +22,7 @@ export default function ExpensesHistory() {
 
         snapshot.forEach((doc) => {
           const data = doc.data();
-          if (data.type === "expense") {
+          if (data.type === "expense" && data.done === true) {
             expenseData.push({ id: doc.id, ...data });
             totalAmount += data.amount;
           }
