@@ -3,13 +3,11 @@ import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
-import { BudgetProvider } from '@/constants/budgetContext';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
 
   return (
-    <BudgetProvider>
       <Tabs
         screenOptions={({ route }) => ({
           headerShown: false,
@@ -43,6 +41,5 @@ export default function TabLayout() {
         <Tabs.Screen name="expensesHistory" options={{ title: 'Expenses' }} />
         <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
       </Tabs>
-    </BudgetProvider>
   );
 }
