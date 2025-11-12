@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  View, 
-  Switch, 
-  StatusBar, 
-  ActivityIndicator, Modal 
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  Switch,
+  StatusBar,
+  ActivityIndicator,
+  Modal
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -38,7 +39,7 @@ export default function SignUpScreen() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [loading, setLoading] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
 
   useEffect(() => {
     async function loadFonts() {
@@ -53,29 +54,29 @@ export default function SignUpScreen() {
     let isValid = true;
     const newErrors: Errors = {};
     if (name.trim() === "" || email.trim() === "" || password.trim() === "" || confirm.trim() === "") {
-        newErrors.name = "All fields are required";
-        isValid = false;
+      newErrors.name = "All fields are required";
+      isValid = false;
     }
 
     if (name.length < 5) {
-        newErrors.name = "Name must be at least 5 characters";
-        isValid = false;
+      newErrors.name = "Name must be at least 5 characters";
+      isValid = false;
     }
 
     const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
     if (!emailRegex.test(email)) {
-        newErrors.email = "Invalid email format";
-        isValid = false;
+      newErrors.email = "Invalid email format";
+      isValid = false;
     }
 
     if (password.length < 6) {
-        newErrors.password = "Password must be at least 6 characters";
-        isValid = false;
+      newErrors.password = "Password must be at least 6 characters";
+      isValid = false;
     }
 
     if (password !== confirm) {
-        newErrors.confirm = "Passwords do not match";
-        isValid = false;
+      newErrors.confirm = "Passwords do not match";
+      isValid = false;
     }
     if (!acceptedTerms) {
       newErrors.terms = "You must accept the Terms & Conditions";
@@ -88,36 +89,39 @@ export default function SignUpScreen() {
 
 
   const handleSignUp = async () => {
-  if (!validateInputs()) return;
-  setLoading(true);
-  try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user; 
+    if (!validateInputs()) return;
+    setLoading(true);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-    await updateProfile(user, {
-      displayName: name,
-    });
+      await updateProfile(user, {
+        displayName: name,
+      });
 
-    const userRef = doc(db, "users", user.uid);
-    await setDoc(userRef, {
-      displayName: name,
-      email: email,
-      overallBudget: 0,
-      amountSpent: 0, 
-      createdAt: new Date()
-    });
+      const userRef = doc(db, "users", user.uid);
+      await setDoc(userRef, {
+        displayName: name,
+        email: email,
+        overallBudget: 0,
+        amountSpent: 0,
+        createdAt: new Date()
+      });
 
-    setLoading(false);
-    setModalVisible(true);
-  } catch (error: any) {
-    if (error.code === 'auth/email-already-in-use') {
-      setErrors({ email: 'Email is already in use' });
-    } else {
-      setErrors({ email: 'Failed to create account. Please try again.' });
+      setLoading(false);
+      setSuccessModalVisible(true);
+      setTimeout(() => {
+        handleModalClose();
+      }, 1500);
+    } catch (error: any) {
+      if (error.code === 'auth/email-already-in-use') {
+        setErrors({ email: 'Email is already in use' });
+      } else {
+        setErrors({ email: 'Failed to create account. Please try again.' });
+      }
+      setLoading(false);
     }
-    setLoading(false);
-  }
-};
+  };
 
 
   if (!fontsLoaded) {
@@ -128,9 +132,9 @@ export default function SignUpScreen() {
     );
   }
   const handleModalClose = () => {
-        setModalVisible(false);
-        router.push("/signin");
-    }
+    setSuccessModalVisible(false);
+    router.push("/signin");
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -225,18 +229,17 @@ export default function SignUpScreen() {
           </TouchableOpacity>
         </View>
       </View>
-      <Modal visible={modalVisible} transparent animationType="fade">
-          <View style={styles.modalOverlay}>
-              <View style={styles.modalBox}>
-                  <Text style={styles.modalTitle}>User created successfully!</Text>
-                  <View style={styles.modalBtnContainer}>
-                      <TouchableOpacity onPress={handleModalClose}>
-                          <Text style={styles.modalBtn}>OK</Text>
-                      </TouchableOpacity>
-                  </View>
-
-              </View>
+      <Modal
+        transparent
+        visible={successModalVisible}
+        animationType="fade"
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Ionicons name="checkmark-circle-outline" size={30} color="#22ab54" />
+            <Text style={styles.modalText}>Successfully Signed Up!</Text>
           </View>
+        </View>
       </Modal>
     </SafeAreaView>
   );
@@ -328,35 +331,23 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   modalOverlay: {
-      flex: 1,
-      backgroundColor: "rgba(0,0,0,0.5)",
-      justifyContent: "center",
-      alignItems: "center"
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center'
   },
-  modalBox: {
-      backgroundColor: "white",
-      borderRadius: 8,
-      boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-      justifyContent: "space-around",
-      alignItems: "center",
-      padding: 20,
-      width: "80%",
-      minHeight: 180
-    },
-    modalTitle: {
-      fontSize: 18,
-      fontWeight: "bold",
-      marginBottom: 10
-    },
-    modalBtnContainer: {
-      flexDirection: "row",
-      justifyContent: "center",
-      width: "100%"
-    },
-    modalBtn: {
-      backgroundColor: "#007AFF",
-      color: "white",
-      padding: 10,
-      borderRadius: 8
-    }
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 30,
+    borderRadius: 16,
+    alignItems: 'center'
+  },
+  modalText: {
+    marginTop: 10,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#22ab54'
+  },
 });
+
+

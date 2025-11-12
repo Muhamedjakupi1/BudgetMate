@@ -4,11 +4,16 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../context/AuthContext";
 import { collection, query, onSnapshot, doc, deleteDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../firebase";
+import ConfirmModal from '../../components/ui/ConfirmModal';
 
 export default function HomePage() {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<any[]>([]);
   const [balance, setBalance] = useState(0);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<any | null>(null);
+  const [modalAction, setModalAction] = useState<'delete' | 'done' | null>(null);
+
 
   useEffect(() => {
     if (!user) return;
@@ -52,6 +57,33 @@ export default function HomePage() {
     }
   };
 
+  const handleDeletePress = (transaction: any) => {
+    setSelectedTransaction(transaction);
+    setModalAction('delete');
+    setModalVisible(true);
+  };
+
+  const handleDonePress = (transaction: any) => {
+    setSelectedTransaction(transaction);
+    setModalAction('done');
+    setModalVisible(true);
+  };
+
+  const handleConfirm = async () => {
+    if (!selectedTransaction || !user) return;
+
+    if (modalAction === 'delete') {
+      await deleteTransaction(selectedTransaction.id);
+    } else if (modalAction === 'done') {
+      await markAsDone(selectedTransaction.id);
+    }
+
+    setModalVisible(false);
+    setSelectedTransaction(null);
+    setModalAction(null);
+  };
+
+
   const pendingExpenses = transactions.filter((t) => t.type === "expense" && !t.done);
 
   const renderExpense = ({ item }: any) => (
@@ -63,13 +95,13 @@ export default function HomePage() {
       <View style={styles.buttonsContainer}>
         <TouchableOpacity
           style={[styles.btn, { backgroundColor: "#FF3B30" }]}
-          onPress={() => deleteTransaction(item.id)}
+          onPress={() => handleDeletePress(item)}
         >
           <Text style={{ color: "white" }}>Delete</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.btn, { backgroundColor: "#34C759" }]}
-          onPress={() => markAsDone(item.id)}
+          onPress={() => handleDonePress(item)}
         >
           <Text style={{ color: "white" }}>Done</Text>
         </TouchableOpacity>
@@ -100,27 +132,45 @@ export default function HomePage() {
           </Text>
         </View>
       )}
+
+      <ConfirmModal
+        visible={modalVisible}
+        type={modalAction === 'delete' ? 'error' : 'success'}
+        message={
+          modalAction === 'delete'
+            ? 'Are you sure you want to delete this expense?'
+            : 'Mark this transaction as done?'
+        }
+        showConfirm={true}
+        onClose={() => setModalVisible(false)}
+        onConfirm={handleConfirm}
+      />
+
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: "#f7f7f7", 
-    paddingHorizontal: 20, 
-    paddingTop: 20 },
-  header: { 
-    flexDirection: "row", 
-    justifyContent: "center", 
-    alignItems: "center", 
-    marginBottom: 20 },
-  budgetText: { 
-    fontSize: 18, 
-    fontWeight: "bold", 
-    color: "#333" },
-  listContainer: { 
-    paddingBottom: 20 },
+  container: {
+    flex: 1,
+    backgroundColor: "#f7f7f7",
+    paddingHorizontal: 20,
+    paddingTop: 20
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20
+  },
+  budgetText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333"
+  },
+  listContainer: {
+    paddingBottom: 20
+  },
   expenseItem: {
     backgroundColor: "#fff",
     borderRadius: 10,
@@ -135,36 +185,44 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 5,
   },
-  expenseTitle: { 
-    fontSize: 16, 
-    fontWeight: "600", 
-    color: "#333" },
-  expenseAmount: { 
-    fontSize: 14, 
-    color: "#777" },
-  buttonsContainer: { 
-    flexDirection: "row", 
-    gap: 10 },
-  btn: { 
-    paddingHorizontal: 15, 
-    paddingVertical: 8, 
-    borderRadius: 5 },
-  noExpenseContainer: { 
-    flex: 1, 
-    justifyContent: "center", 
-    alignItems: "center" },
-  noExpenseEmoji: { 
-    fontSize: 50, 
-    marginBottom: 15 },
-  noExpenseTitle: { 
-    fontSize: 20, 
-    fontWeight: "bold", 
-    color: "#2E8B57", 
-    textAlign: "center", 
-    marginBottom: 10 },
-  noExpenseSubtitle: { 
-    fontSize: 16, 
-    color: "#666", 
-    textAlign: "center", 
-    lineHeight: 22 },
+  expenseTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333"
+  },
+  expenseAmount: {
+    fontSize: 14,
+    color: "#777"
+  },
+  buttonsContainer: {
+    flexDirection: "row",
+    gap: 10
+  },
+  btn: {
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 5
+  },
+  noExpenseContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center"
+  },
+  noExpenseEmoji: {
+    fontSize: 50,
+    marginBottom: 15
+  },
+  noExpenseTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#2E8B57",
+    textAlign: "center",
+    marginBottom: 10
+  },
+  noExpenseSubtitle: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    lineHeight: 22
+  },
 });

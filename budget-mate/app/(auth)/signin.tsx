@@ -6,7 +6,8 @@ import {
   TouchableOpacity,
   View,
   StatusBar,
-  Alert
+  Alert,
+  Modal
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,6 +25,7 @@ export default function SignInScreen() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
 
   useEffect(() => {
     Font.loadAsync(Ionicons.font).then(() => setFontsLoaded(true));
@@ -62,9 +64,12 @@ export default function SignInScreen() {
     const userSnap = await getDoc(userRef);
 
     console.log('Logged in user:', user.uid, user.email, userSnap.data());
+    setSuccessModalVisible(true);
 
-    alert(`Welcome ${user.email}`);
-    router.push('../(tabs)');
+    setTimeout(() => {
+        setSuccessModalVisible(false);
+        router.push('../(tabs)');
+      }, 1500);
   } catch (err: any) {
     console.error('Login error', err);
     setError(err.message || 'Login failed');
@@ -78,8 +83,13 @@ export default function SignInScreen() {
   try {
     const result = await signInWithPopup(auth, googleProvider);
     const user = result.user;
-    Alert.alert("Welcome", `Logged in as ${user.displayName}`);
-    router.push('../(tabs)');
+    
+    setSuccessModalVisible(true);
+      setTimeout(() => {
+        setSuccessModalVisible(false);
+        router.push('../(tabs)');
+      }, 1500);
+
   } catch (err: any) { 
     setError(err?.message || "An error occurred");
   }
@@ -135,6 +145,20 @@ export default function SignInScreen() {
           </TouchableOpacity>
         </View>
       </View>
+
+      <Modal
+        transparent
+        visible={successModalVisible}
+        animationType="fade"
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Ionicons name="checkmark-circle-outline" size={30} color="#22ab54" />
+            <Text style={styles.modalText}>Successfully Signed In!</Text>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -244,4 +268,19 @@ googleText: {
   fontWeight: '500',
 },
 
+modalOverlay: { 
+  flex:1, 
+  backgroundColor:'rgba(0,0,0,0.3)', 
+  justifyContent:'center', 
+  alignItems:'center' },
+  modalContent: { 
+    backgroundColor:'#fff', 
+    padding:30, 
+    borderRadius:16, 
+    alignItems:'center' },
+  modalText: { 
+    marginTop:10, 
+    fontSize:18, 
+    fontWeight:'600', 
+    color:'#22ab54' },
 });
