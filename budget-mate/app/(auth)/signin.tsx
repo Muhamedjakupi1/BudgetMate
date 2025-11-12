@@ -17,6 +17,7 @@ import * as Font from 'expo-font';
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 import StatusModal from '../../components/ui/statusModal';
+import { setDoc } from "firebase/firestore";
 
 export default function SignInScreen() {
   const [email, setEmail] = useState('');
@@ -94,6 +95,16 @@ export default function SignInScreen() {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
 
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      if (!userSnap.exists()) {
+      await setDoc(userRef, {
+        email: user.email,
+        displayName: user.displayName,
+        overallBudget: 0 
+      });
+    }
+      setStatusType("success");
       setSuccessModalVisible(true);
       setSuccessMessage("Successfully Signed In!");
       setTimeout(() => {
@@ -102,7 +113,10 @@ export default function SignInScreen() {
       }, 1500);
 
     } catch (err: any) {
-      setError(err?.message || "An error occurred");
+      console.error(err);
+      setStatusType("error");
+      setSuccessMessage(err.message || "Login failed");
+      setSuccessModalVisible(true);
     }
   };
 
