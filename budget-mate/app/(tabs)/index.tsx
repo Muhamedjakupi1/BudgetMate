@@ -12,7 +12,7 @@ export default function HomePage() {
   const [balance, setBalance] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<any | null>(null);
-  const [modalAction, setModalAction] = useState<'delete' | 'done' | null>(null);
+  const [modalAction, setModalAction] = useState< 'edit' |'delete' | 'done' | null>(null);
 
 
   useEffect(() => {
@@ -55,6 +55,12 @@ export default function HomePage() {
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const handleEditPress = (transactions: any)  => {
+    setSelectedTransaction(transactions);
+    setModalAction('edit');
+    setModalVisible(true);
   };
 
   const handleDeletePress = (transaction: any) => {
@@ -104,6 +110,11 @@ export default function HomePage() {
           onPress={() => handleDonePress(item)}
         >
           <Text style={{ color: "white" }}>Done</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+        style = {[styles.btn,{backgroundColor: "#007AFF"}]}
+        onPress = {() => handleEditPress(item)}>
+          <Text style = {{color: "white"}}>Edit</Text>
         </TouchableOpacity>
       </View>
     </View>
