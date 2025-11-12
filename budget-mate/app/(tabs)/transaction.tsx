@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Button, StyleSheet, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FormInput from '../../components/ui/textinput';
 import { doc, getDoc, addDoc, collection, updateDoc, getDocs } from "firebase/firestore";
 import { db } from "../../firebase";
 import { useAuth } from '../../context/AuthContext';
-import StatusModal from '../../components/ui/statusModal'
+import StatusModal from '../../components/ui/statusModal';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 const categoryColors: Record<string, string> = {
   Transport: '#E53935',
@@ -26,6 +27,9 @@ const paymentOptions = ['Cash', 'Card'];
 const expenseCategories = ['Transport', 'Food and Drink', 'Home Bills', 'Entertainment', 'Shopping', 'Health', 'Other'];
 
 const AddTransaction: React.FC = () => {
+  const router = useRouter();
+  const params = useLocalSearchParams();
+  const id = params.id as string | undefined;
   const { user } = useAuth();
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [amount, setAmount] = useState('');
@@ -38,8 +42,36 @@ const AddTransaction: React.FC = () => {
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [statusType, setStatusType] = useState<"success" | "error">("success");
+   useEffect(() => {
+    if (!id || !user) return;
 
-  const handleSave = async () => {
+    const fetchTransaction = async () => {
+      try {
+        const docRef = doc(db, 'users', user.uid, 'transactions', id);
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists()) {
+          alert("Transaction not found!");
+          router.back();
+          return;
+        }
+        const data = docSnap.data();
+        setAmount(data.amount.toString());
+        setCategory(data.category || '');
+        setNote(data.note || '');
+        setPaymentType(data.paymentType || '');
+        setPayeeName(data.payeeName || '');
+        setType(data.type || 'expense');
+      } catch (err) {
+        console.error(err);
+        alert("Error fetching transaction data.");
+        router.back();
+      }
+    };
+
+    fetchTransaction();
+  }, [id, user]);
+
+  const handleSaveOrUpdate = async () => {
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) {
       alert('Enter a valid amount!');
@@ -60,48 +92,64 @@ const AddTransaction: React.FC = () => {
         return;
       }
 
-      const transactionsSnap = await getDocs(collection(db, 'users', user.uid, 'transactions'));
-      let totalIncome = 0;
-      let totalExpense = 0;
+      if(id){
+         await updateDoc(doc(db, 'users', user.uid, 'transactions', id), {
+          amount: numAmount,
+          category,
+          note,
+          paymentType,
+          payeeName,
+          type
+        });
+        setSuccessMessage("Transaction updated successfully!");
+      }else{
+        
+       const transactionsSnap = await getDocs(collection(db, 'users', user.uid, 'transactions'));
+        let totalIncome = 0;
+        let totalExpense = 0;
 
-      transactionsSnap.forEach((doc) => {
-        const t = doc.data();
-        if (t.type === 'income') totalIncome += t.amount;
-        if (t.type === 'expense') totalExpense += t.amount;
-      });
+        transactionsSnap.forEach((doc) => {
+          const t = doc.data();
+          if (t.type === 'income') totalIncome += t.amount;
+          if (t.type === 'expense') totalExpense += t.amount;
+        });
 
-      const currentBudget = totalIncome - totalExpense;
+        const currentBudget = totalIncome - totalExpense;
 
-      if (type === 'expense' && numAmount > currentBudget) {
-        alert(`Insufficient budget! You have ${currentBudget} left.`);
-        return;
+        if (type === 'expense' && numAmount > currentBudget) {
+          alert(`Insufficient budget! You have ${currentBudget} left.`);
+          return;
+        }
+
+        const transactionData = {
+          type,
+          amount: numAmount,
+          date: new Date(),
+          category: type === 'expense' ? category : null,
+          note: type === 'expense' ? note : null,
+          paymentType: type === 'expense' ? paymentType : null,
+          payeeName: type === 'expense' ? payeeName : null,
+          done: false
+        };
+        
+        await addDoc(collection(db, 'users', user.uid, 'transactions'), transactionData);
+
+        if (type === 'expense') {
+          await updateDoc(userRef, { overallBudget: currentBudget - numAmount });
+        }
       }
 
-      const transactionData = {
-        type,
-        amount: numAmount,
-        date: new Date(),
-        category: type === 'expense' ? category : null,
-        note: type === 'expense' ? note : null,
-        paymentType: type === 'expense' ? paymentType : null,
-        payeeName: type === 'expense' ? payeeName : null,
-        done: false
-      };
+      
+        setAmount('');
+        setCategory('');
+        setNote('');
+        setPaymentType('');
+        setPayeeName('');
+        setCategoryOpen(false);
+        setPaymentOpen(false);
 
-      await addDoc(collection(db, 'users', user.uid, 'transactions'), transactionData);
-
-      if (type === 'expense') {
-        await updateDoc(userRef, { overallBudget: currentBudget - numAmount });
-      }
-      setAmount('');
-      setCategory('');
-      setNote('');
-      setPaymentType('');
-      setPayeeName('');
-      setCategoryOpen(false);
-      setPaymentOpen(false);
-
-      setStatusType("success");
+        setStatusType("success");
+      
       setSuccessModalVisible(true);
       if (type === 'expense') {
         setSuccessMessage("Expense has been saved successfully!");
@@ -210,7 +258,7 @@ const AddTransaction: React.FC = () => {
           )}
 
           <View style={{ marginTop: 20 }}>
-            <Button title="Save Transaction" onPress={handleSave} color="#518e59ff" />
+            <Button title={id ? "Update Transaction":"Save Transaction"} onPress={handleSaveOrUpdate} color="#518e59ff" />
           </View>
         </ScrollView>
       </View>

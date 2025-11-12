@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { FlatList, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {useRouter} from  'expo-router';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../context/AuthContext";
 import { collection, query, onSnapshot, doc, deleteDoc, updateDoc } from "firebase/firestore";
@@ -12,9 +13,9 @@ export default function HomePage() {
   const [balance, setBalance] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<any | null>(null);
-  const [modalAction, setModalAction] = useState< 'edit' |'delete' | 'done' | null>(null);
+  const [modalAction, setModalAction] = useState< 'delete' | 'done' | null>(null);
 
-
+const router = useRouter();
   useEffect(() => {
     if (!user) return;
 
@@ -57,20 +58,21 @@ export default function HomePage() {
     }
   };
 
-  const updateTransaction = async(id: string, updatedData: any) => {
-    if(!user) return;
-    try{
+  const updateTransaction = async (id: string, updatedData: any) => {
+    if (!user) return;
+    try {
       const docRef = doc(db, "users", user.uid, "transactions", id);
       await updateDoc(docRef, updatedData);
-    }catch(err){
-        console.error(err);
+    } catch (err) {
+      console.error(err);
     }
   }
 
-  const handleEditPress = (transactions: any)  => {
-    setSelectedTransaction(transactions);
-    setModalAction('edit');
-    setModalVisible(true);
+  const handleEditPress = (transactions: any) => {
+    router.push({
+      pathname: "/transaction",
+      params: {id: transactions.id, data: JSON.stringify(transactions)}
+    })
   };
 
   const handleDeletePress = (transaction: any) => {
@@ -85,7 +87,7 @@ export default function HomePage() {
     setModalVisible(true);
   };
 
-  const handleConfirm = async () => {
+  const handleConfirm = async (updatedData?: any) => {
     if (!selectedTransaction || !user) return;
 
     if (modalAction === 'delete') {
@@ -121,10 +123,10 @@ export default function HomePage() {
         >
           <Text style={{ color: "white" }}>Done</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-        style = {[styles.btn,{backgroundColor: "#007AFF"}]}
-        onPress = {() => handleEditPress(item)}>
-          <Text style = {{color: "white"}}>Edit</Text>
+        <TouchableOpacity
+          style={[styles.btn, { backgroundColor: "#007AFF" }]}
+          onPress={() => handleEditPress(item)}>
+          <Text style={{ color: "white" }}>Edit</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -166,7 +168,6 @@ export default function HomePage() {
         onClose={() => setModalVisible(false)}
         onConfirm={handleConfirm}
       />
-
     </SafeAreaView>
   );
 }
