@@ -57,6 +57,16 @@ export default function HomePage() {
     }
   };
 
+  const updateTransaction = async(id: string, updatedData: any) => {
+    if(!user) return;
+    try{
+      const docRef = doc(db, "users", user.uid, "transactions", id);
+      await updateDoc(docRef, updatedData);
+    }catch(err){
+        console.error(err);
+    }
+  }
+
   const handleEditPress = (transactions: any)  => {
     setSelectedTransaction(transactions);
     setModalAction('edit');
