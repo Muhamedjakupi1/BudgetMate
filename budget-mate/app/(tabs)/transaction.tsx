@@ -85,6 +85,7 @@ const AddTransaction: React.FC = () => {
         note: type === 'expense' ? note : null,
         paymentType: type === 'expense' ? paymentType : null,
         payeeName: type === 'expense' ? payeeName : null,
+        done: false
       };
 
       await addDoc(collection(db, 'users', user.uid, 'transactions'), transactionData);
