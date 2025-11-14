@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, Image, TouchableOpacity, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { auth, db } from '../../firebase';
+import { db } from '../../firebase';
 import { onSnapshot, collection } from 'firebase/firestore';
 import { router } from 'expo-router';
+import { useAuth } from '../../context/AuthContext';
 
 type Transaction = {
   id: string;
@@ -12,13 +13,13 @@ type Transaction = {
 };
 
 const Profile = () => {
-  const currentUser = auth.currentUser;
+  const { user: currentUser } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [userName, setUserName] = useState(currentUser?.displayName || 'No Name');
-  const [userEmail, setUserEmail] = useState(currentUser?.email || 'No Email');
-  const [profilePic, setProfilePic] = useState(
-    currentUser?.photoURL ? { uri: currentUser.photoURL } : require('../../assets/images/budgetmate-logo.png')
-  );
+  const userName = currentUser?.displayName || 'No Name';
+  const userEmail = currentUser?.email || 'No Email';
+  const profilePic = currentUser?.photoURL
+    ? { uri: currentUser.photoURL }
+    : require('../../assets/images/budgetmate-logo.png');
 
   useEffect(() => {
     if (!currentUser) return;
@@ -49,7 +50,9 @@ const Profile = () => {
   const balance = totalIncome - totalExpense;
   const totalDoneExpenses = transactions.filter((t) => t.type === 'expense').length;
 
-  const handleLogout = () => {
+  const { logout } = useAuth();
+  const handleLogout = async () => {
+    await logout();
     router.replace('.././(auth)');
   };
 
@@ -92,12 +95,27 @@ const Profile = () => {
 export default Profile;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f7f7f7' },
-  sContainer: { padding: 20, alignItems: 'center' },
-  profileHeader: { alignItems: 'center', marginBottom: 30 },
-  profileImage: { width: 100, height: 100, borderRadius: 50, marginBottom: 15 },
-  userName: { fontSize: 22, fontWeight: 'bold', color: '#333' },
-  userEmail: { fontSize: 16, color: '#777' },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#f7f7f7' },
+  sContainer: { 
+    padding: 20, 
+    alignItems: 'center' },
+  profileHeader: { 
+    alignItems: 'center', 
+    marginBottom: 30 },
+  profileImage: { 
+    width: 100, 
+    height: 100, 
+    borderRadius: 50, 
+    marginBottom: 15 },
+  userName: { 
+    fontSize: 22, 
+    fontWeight: 'bold', 
+    color: '#333' },
+  userEmail: { 
+    fontSize: 16, 
+    color: '#777' },
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -116,8 +134,13 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 3,
   },
-  statNumber: { fontSize: 18, fontWeight: 'bold', marginBottom: 5 },
-  statLabel: { fontSize: 14, color: '#777' },
+  statNumber: { 
+    fontSize: 18, 
+    fontWeight: 'bold', 
+    marginBottom: 5 },
+  statLabel: { 
+    fontSize: 14, 
+    color: '#777' },
   button: {
     width: '100%',
     backgroundColor: '#007BFF',
@@ -126,5 +149,8 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     alignItems: 'center',
   },
-  buttonText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
+  buttonText: { 
+    color: 'white', 
+    fontWeight: 'bold', 
+    fontSize: 16 },
 });
