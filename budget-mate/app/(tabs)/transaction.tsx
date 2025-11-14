@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Button, StyleSheet, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FormInput from '../../components/ui/textinput';
@@ -6,7 +6,7 @@ import { doc, getDoc, addDoc, collection, updateDoc, getDocs } from "firebase/fi
 import { db } from "../../firebase";
 import { useAuth } from '../../context/AuthContext';
 import StatusModal from '../../components/ui/statusModal';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import {useRouter } from 'expo-router';
 
 const categoryColors: Record<string, string> = {
   Transport: '#E53935',
@@ -28,8 +28,6 @@ const expenseCategories = ['Transport', 'Food and Drink', 'Home Bills', 'Enterta
 
 const AddTransaction: React.FC = () => {
   const router = useRouter();
-  const params = useLocalSearchParams();
-  const id = params.id as string | undefined;
   const { user } = useAuth();
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [amount, setAmount] = useState('');
@@ -42,36 +40,8 @@ const AddTransaction: React.FC = () => {
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [statusType, setStatusType] = useState<"success" | "error">("success");
-   useEffect(() => {
-    if (!id || !user) return;
 
-    const fetchTransaction = async () => {
-      try {
-        const docRef = doc(db, 'users', user.uid, 'transactions', id);
-        const docSnap = await getDoc(docRef);
-        if (!docSnap.exists()) {
-          alert("Transaction not found!");
-          router.back();
-          return;
-        }
-        const data = docSnap.data();
-        setAmount(data.amount.toString());
-        setCategory(data.category || '');
-        setNote(data.note || '');
-        setPaymentType(data.paymentType || '');
-        setPayeeName(data.payeeName || '');
-        setType(data.type || 'expense');
-      } catch (err) {
-        console.error(err);
-        alert("Error fetching transaction data.");
-        router.back();
-      }
-    };
-
-    fetchTransaction();
-  }, [id, user]);
-
-  const handleSaveOrUpdate = async () => {
+  const handleSave = async () => {
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) {
       alert('Enter a valid amount!');
@@ -86,25 +56,14 @@ const AddTransaction: React.FC = () => {
     try {
       const userRef = doc(db, 'users', user.uid);
       const userSnap = await getDoc(userRef);
-
+  
+      
       if (!userSnap.exists()) {
         alert('User data not found!');
         return;
       }
 
-      if(id){
-         await updateDoc(doc(db, 'users', user.uid, 'transactions', id), {
-          amount: numAmount,
-          category,
-          note,
-          paymentType,
-          payeeName,
-          type
-        });
-        setSuccessMessage("Transaction updated successfully!");
-      }else{
-        
-       const transactionsSnap = await getDocs(collection(db, 'users', user.uid, 'transactions'));
+      const transactionsSnap = await getDocs(collection(db, 'users', user.uid, 'transactions'));
         let totalIncome = 0;
         let totalExpense = 0;
 
@@ -134,12 +93,15 @@ const AddTransaction: React.FC = () => {
         
         await addDoc(collection(db, 'users', user.uid, 'transactions'), transactionData);
 
+        let newOverallBudget = currentBudget;
         if (type === 'expense') {
-          await updateDoc(userRef, { overallBudget: currentBudget - numAmount });
+         newOverallBudget = currentBudget - numAmount;
+        }else if(type === 'income'){
+          newOverallBudget = currentBudget + numAmount;
         }
-      }
 
-      
+        await updateDoc(userRef, {overallBudget: newOverallBudget});
+
         setAmount('');
         setCategory('');
         setNote('');
@@ -258,7 +220,7 @@ const AddTransaction: React.FC = () => {
           )}
 
           <View style={{ marginTop: 20 }}>
-            <Button title={id ? "Update Transaction":"Save Transaction"} onPress={handleSaveOrUpdate} color="#518e59ff" />
+            <Button title={"Save Transaction"} onPress={handleSave} color="#518e59ff" />
           </View>
         </ScrollView>
       </View>

@@ -58,21 +58,8 @@ const router = useRouter();
     }
   };
 
-  const updateTransaction = async (id: string, updatedData: any) => {
-    if (!user) return;
-    try {
-      const docRef = doc(db, "users", user.uid, "transactions", id);
-      await updateDoc(docRef, updatedData);
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  const handleEditPress = (transactions: any) => {
-    router.push({
-      pathname: "/transaction",
-      params: {id: transactions.id, data: JSON.stringify(transactions)}
-    })
+  const handleEditPress = (transaction: any) => {
+     router.push(`/expense/${transaction.id}`)
   };
 
   const handleDeletePress = (transaction: any) => {
