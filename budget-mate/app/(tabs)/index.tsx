@@ -1,86 +1,122 @@
 import React, { useEffect, useState } from "react";
-import { FlatList, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, StatusBar, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from "react-native";
 import {useRouter} from  'expo-router';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../context/AuthContext";
 import { collection, query, onSnapshot, doc, deleteDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 import ConfirmModal from '../../components/ui/ConfirmModal';
+import { Transaction, generateRandomTransactions } from "../../components/RandomTransaction";
 
 export default function HomePage() {
   const { user } = useAuth();
-  const [transactions, setTransactions] = useState<any[]>([]);
   const [balance, setBalance] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<any | null>(null);
   const [modalAction, setModalAction] = useState< 'delete' | 'done' | null>(null);
-
+  const [firebaseTransactions, setFirebaseTransactions] = useState<Transaction[]>([]);
+  const [apiTransactions, setApiTransactions] = useState<Transaction[]>([]);
 const router = useRouter();
   useEffect(() => {
     if (!user) return;
 
     const q = query(collection(db, "users", user.uid, "transactions"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const trans: any[] = [];
+      const trans: Transaction[] = [];
       let totalBalance = 0;
 
       snapshot.forEach((doc) => {
-        const data = doc.data();
-        trans.push({ id: doc.id, ...data });
-
+        const data = doc.data() as Transaction;
+        trans.push({
+          id: doc.id,
+          type: data.type,
+          amount: data.amount,
+          category: data.category,
+          done: data.done,
+          note: data.note,
+          paymentType: data.paymentType,
+          payeeName: data.payeeName,
+          date: data.date,
+          isExternalApi: false, 
+        });
         if (data.type === "income") totalBalance += data.amount;
         if (data.type === "expense") totalBalance -= data.amount;
       });
-
-      setTransactions(trans.sort((a, b) => b.id.localeCompare(a.id)));
+      setFirebaseTransactions(trans);
       setBalance(totalBalance);
     });
 
     return () => unsubscribe();
   }, [user]);
 
-  const deleteTransaction = async (id: string) => {
+  const addRandomTransactions = async () => {
+    setLoading(true);
+    try {
+      const newTxns = await generateRandomTransactions();
+      setApiTransactions((prev) => [...prev, ...newTxns]);
+    } catch (err) {
+      console.error("Gabim gjatë marrjes së transaksioneve:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteTransaction = async (txn: Transaction) => {
+    if (!user) return;
+    try{
+      if (txn.isExternalApi) {
+        setApiTransactions((prev) => prev.filter((t) => t.id !== txn.id));
+      } else if (user) {
+        await deleteDoc(doc(db, "users", user.uid, "transactions", txn.id));
+      }
+    } catch(err){
+      console.error(err);
+    }
+  };
+
+  const markAsDone = async (txn: Transaction) => {
     if (!user) return;
     try {
-      await deleteDoc(doc(db, "users", user.uid, "transactions", id));
+      if (txn.isExternalApi) {
+      setApiTransactions((prev) =>
+        prev.map((t) => (t.id === txn.id ? { ...t, done: true } : t))
+      );
+    } else if (user) {
+      await updateDoc(doc(db, "users", user.uid, "transactions", txn.id), {
+        done: true,
+      });
+    }
+
     } catch (err) {
       console.error(err);
     }
   };
 
-  const markAsDone = async (id: string) => {
-    if (!user) return;
-    try {
-      const docRef = doc(db, "users", user.uid, "transactions", id);
-      await updateDoc(docRef, { done: true });
-    } catch (err) {
-      console.error(err);
-    }
+  const handleEditPress = (txn: Transaction) => {
+    if (!txn.isExternalApi) router.push(`/expense/${txn.id}`)
   };
 
-  const handleEditPress = (transaction: any) => {
-     router.push(`/expense/${transaction.id}`)
-  };
-
-  const handleDeletePress = (transaction: any) => {
-    setSelectedTransaction(transaction);
+  const handleDeletePress = (txn: Transaction) => {
+    setSelectedTransaction(txn);
     setModalAction('delete');
     setModalVisible(true);
   };
 
-  const handleDonePress = (transaction: any) => {
-    setSelectedTransaction(transaction);
-    setModalAction('done');
+   const handleDonePress = (txn : Transaction) => {
+    if(txn.isExternalApi) return;
+    setSelectedTransaction(txn);
+    setModalAction("done");
     setModalVisible(true);
   };
 
-  const handleConfirm = async (updatedData?: any) => {
+  const handleConfirm = async () => {
     if (!selectedTransaction || !user) return;
 
     if (modalAction === 'delete') {
-      await deleteTransaction(selectedTransaction.id);
+      await deleteTransaction(selectedTransaction);
     } else if (modalAction === 'done') {
-      await markAsDone(selectedTransaction.id);
+      await markAsDone(selectedTransaction);
     }
 
     setModalVisible(false);
@@ -88,14 +124,21 @@ const router = useRouter();
     setModalAction(null);
   };
 
+  const allTransactions = [...firebaseTransactions, ...apiTransactions].sort(
+    (a, b) => (b.date ? new Date(b.date).getTime() : 0) - (a.date ? new Date(a.date).getTime() : 0)
+  );
 
-  const pendingExpenses = transactions.filter((t) => t.type === "expense" && !t.done);
+  const pendingExpenses = allTransactions.filter(
+    (t) => t.type === "expense" && !t.done
+  );
 
-  const renderExpense = ({ item }: any) => (
+  const renderExpense = ({ item }: {item : Transaction}) => (
     <View style={styles.expenseItem}>
       <View>
-        <Text style={styles.expenseTitle}>{item.category}</Text>
+        <Text style={styles.expenseTitle}>{item.category}
+          {item.isExternalApi ? "(FAKE)" : ""}</Text>
         <Text style={styles.expenseAmount}>${item.amount}</Text>
+        {item.note && <Text style={styles.expenseNote}>{item.note}</Text>}
       </View>
       <View style={styles.buttonsContainer}>
         <TouchableOpacity
@@ -110,11 +153,14 @@ const router = useRouter();
         >
           <Text style={{ color: "white" }}>Done</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.btn, { backgroundColor: "#007AFF" }]}
-          onPress={() => handleEditPress(item)}>
-          <Text style={{ color: "white" }}>Edit</Text>
-        </TouchableOpacity>
+        {!item.isExternalApi && (
+          <TouchableOpacity
+            style={[styles.btn, { backgroundColor: "#007AFF" }]}
+            onPress={() => handleEditPress(item)}
+          >
+            <Text style={{ color: "white" }}>Edit</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -125,6 +171,17 @@ const router = useRouter();
       <View style={styles.header}>
         <Text style={styles.budgetText}>💵 Budget: ${balance}</Text>
       </View>
+      <TouchableOpacity
+        style={[styles.btn, { backgroundColor: "#34aac7", marginBottom: 20 }]}
+        onPress={addRandomTransactions}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={{ color: "white" }}>Add 5 Random Expenses (API)</Text>
+        )}
+      </TouchableOpacity>
 
       {pendingExpenses.length > 0 ? (
         <FlatList
@@ -233,5 +290,10 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
     lineHeight: 22
+  },
+  expenseNote: {
+     fontSize: 12,
+     color: "#555",
+     marginTop: 4 
   },
 });
