@@ -14,9 +14,8 @@ export interface Transaction {
   isExternalApi?: boolean; 
 }
 // URL e API te jashtme
-const EXTERNAL_API_URL = "https://jsonplaceholder.typicode.com/posts?_limit=5";
+const EXTERNAL_API_URL = "https://fakestoreapi.com/products?limit=5";
 export const generateRandomTransactions = async (): Promise<Transaction[]> => {
-  const categories = ["Transport", "Food and Drink", "Shopping", "Entertainment", "Home Bills"];
   const paymentOptions = ["Cash", "Card"];
   try {
     const response = await fetch(EXTERNAL_API_URL);
@@ -24,13 +23,12 @@ export const generateRandomTransactions = async (): Promise<Transaction[]> => {
     const externalData: any[] = await response.json();
     const transformedTransactions: Transaction[] = externalData.map((data, index) => {
       const amount = Math.floor(Math.random() * 100) + 1;
-      const category = categories[Math.floor(Math.random() * categories.length)];
       const paymentType = paymentOptions[Math.floor(Math.random() * paymentOptions.length)];
       return {
         id: nanoid(),
         type: "expense",
         amount,
-        category,
+        category: "Shopping",  
         done: false,
         date: new Date().toDateString(),
         note: data.title.substring(0, 50),
@@ -41,7 +39,7 @@ export const generateRandomTransactions = async (): Promise<Transaction[]> => {
     });
     return transformedTransactions;
   } catch (error) {
-    console.error("Deshtoi marrja e transaksioneve nga API:", error);
+    console.error("An error occurred while trying to get the random transactions:", error);
     return [];
   }
 };

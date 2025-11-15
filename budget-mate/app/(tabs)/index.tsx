@@ -56,7 +56,7 @@ const router = useRouter();
       const newTxns = await generateRandomTransactions();
       setApiTransactions((prev) => [...prev, ...newTxns]);
     } catch (err) {
-      console.error("Gabim gjatë marrjes së transaksioneve:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -147,12 +147,14 @@ const router = useRouter();
         >
           <Text style={{ color: "white" }}>Delete</Text>
         </TouchableOpacity>
+        {!item.isExternalApi && (
         <TouchableOpacity
           style={[styles.btn, { backgroundColor: "#34C759" }]}
           onPress={() => handleDonePress(item)}
         >
           <Text style={{ color: "white" }}>Done</Text>
         </TouchableOpacity>
+        )}
         {!item.isExternalApi && (
           <TouchableOpacity
             style={[styles.btn, { backgroundColor: "#007AFF" }]}
