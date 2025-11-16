@@ -6,7 +6,7 @@ import { doc, getDoc, addDoc, collection, updateDoc, getDocs } from "firebase/fi
 import { db } from "../../firebase";
 import { useAuth } from '../../context/AuthContext';
 import StatusModal from '../../components/ui/statusModal';
-import {useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 
 const categoryColors: Record<string, string> = {
   Transport: '#E53935',
@@ -43,92 +43,105 @@ const AddTransaction: React.FC = () => {
 
   const handleSave = async () => {
     const numAmount = parseFloat(amount);
+
     if (isNaN(numAmount) || numAmount <= 0) {
-      alert('Enter a valid amount!');
+      setStatusType("error");
+      setSuccessMessage("Enter a valid amount!");
+      setSuccessModalVisible(true);
+      setTimeout(() => setSuccessModalVisible(false), 1500);
       return;
     }
 
     if (!user) {
-      alert('User not logged in!');
+      setStatusType("error");
+      setSuccessMessage("User not logged in!");
+      setSuccessModalVisible(true);
+      setTimeout(() => setSuccessModalVisible(false), 1500);
+      return;
+    }
+
+    if (type === 'expense' && (!category)) {
+      setStatusType("error");
+      setSuccessMessage("Please fill in all required fields for expense!");
+      setSuccessModalVisible(true);
+      setTimeout(() => setSuccessModalVisible(false), 1500);
       return;
     }
 
     try {
       const userRef = doc(db, 'users', user.uid);
       const userSnap = await getDoc(userRef);
-  
-      
+
       if (!userSnap.exists()) {
-        alert('User data not found!');
+        setStatusType("error");
+        setSuccessMessage("User data not found!");
+        setSuccessModalVisible(true);
+        setTimeout(() => setSuccessModalVisible(false), 1500);
         return;
       }
 
       const transactionsSnap = await getDocs(collection(db, 'users', user.uid, 'transactions'));
-        let totalIncome = 0;
-        let totalExpense = 0;
+      let totalIncome = 0;
+      let totalExpense = 0;
 
-        transactionsSnap.forEach((doc) => {
-          const t = doc.data();
-          if (t.type === 'income') totalIncome += t.amount;
-          if (t.type === 'expense' && t.done) totalExpense += t.amount;
-        });
+      transactionsSnap.forEach((doc) => {
+        const t = doc.data();
+        if (t.type === 'income') totalIncome += t.amount;
+        if (t.type === 'expense' && t.done) totalExpense += t.amount;
+      });
 
-        const currentBudget = totalIncome - totalExpense;
+      const currentBudget = totalIncome - totalExpense;
 
-        if (type === 'expense' && numAmount > currentBudget) {
-          alert(`Insufficient budget! You have ${currentBudget} left.`);
-          return;
-        }
-
-        const transactionData = {
-          type,
-          amount: numAmount,
-          date: new Date(),
-          category: type === 'expense' ? category : null,
-          note: type === 'expense' ? note : null,
-          paymentType: type === 'expense' ? paymentType : null,
-          payeeName: type === 'expense' ? payeeName : null,
-          done: false
-        };
-        
-        await addDoc(collection(db, 'users', user.uid, 'transactions'), transactionData);
-
-        let newOverallBudget = currentBudget;
-      if(type === 'income'){
-          newOverallBudget = currentBudget + numAmount;
-        }
-
-        await updateDoc(userRef, {overallBudget: newOverallBudget});
-
-        setAmount('');
-        setCategory('');
-        setNote('');
-        setPaymentType('');
-        setPayeeName('');
-        setCategoryOpen(false);
-        setPaymentOpen(false);
-
-        setStatusType("success");
-      
-      setSuccessModalVisible(true);
-      if (type === 'expense') {
-        setSuccessMessage("Expense has been saved successfully!");
-      } else {
-        setSuccessMessage("Income has been saved successfully!");
+      if (type === 'expense' && numAmount > currentBudget) {
+        setStatusType("error");
+        setSuccessMessage(`⚠️ Not enough budget! You have ${currentBudget} left.`);
+        setSuccessModalVisible(true);
+        setTimeout(() => setSuccessModalVisible(false), 1500);
+        return;
       }
-      setTimeout(() => {
-        setSuccessModalVisible(false);
-      }, 1500);
+
+      const transactionData = {
+        type,
+        amount: numAmount,
+        date: new Date(),
+        category: type === 'expense' ? category : null,
+        note: type === 'expense' ? note : null,
+        paymentType: type === 'expense' ? paymentType : null,
+        payeeName: type === 'expense' ? payeeName : null,
+        done: false
+      };
+
+      await addDoc(collection(db, 'users', user.uid, 'transactions'), transactionData);
+
+      let newOverallBudget = currentBudget;
+      if (type === 'income') {
+        newOverallBudget = currentBudget + numAmount;
+      }
+
+      await updateDoc(userRef, { overallBudget: newOverallBudget });
+
+      setAmount('');
+      setCategory('');
+      setNote('');
+      setPaymentType('');
+      setPayeeName('');
+      setCategoryOpen(false);
+      setPaymentOpen(false);
+
+      setStatusType("success");
+      setSuccessMessage(type === 'expense' ? "Expense has been saved successfully!" : "Income has been saved successfully!");
+      setSuccessModalVisible(true);
+      setTimeout(() => setSuccessModalVisible(false), 1500);
+
     } catch (error) {
       console.error('Error saving transaction:', error);
       setStatusType("error");
       setSuccessMessage("Couldn't save transaction. Check budget and try again.");
       setSuccessModalVisible(true);
-      setTimeout(() => {
-        setSuccessModalVisible(false);
-      }, 1500);
+      setTimeout(() => setSuccessModalVisible(false), 1500);
     }
   };
+
 
   return (
     <SafeAreaView style={styles.safeArea}>
