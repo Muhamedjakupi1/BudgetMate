@@ -74,7 +74,7 @@ export default function TransactionDetail() {
         if (!user || !id || !transaction) return;
 
         const amountValue = parseFloat(newAmount);
-        const oldAmountValue = transaction.amount;
+        //const oldAmountValue = transaction.amount;
         const transactionType = transaction.type;
 
         if (isNaN(amountValue) || amountValue <= 0) {
@@ -101,27 +101,22 @@ export default function TransactionDetail() {
 
         try {
             const transactionRef = doc(db, "users", user.uid, "transactions", id as string);
-            const userRef = doc(db, 'users', user.uid);
+          await updateDoc(transactionRef, updatedData);
+          //  const userRef = doc(db, 'users', user.uid);
 
+            //const userSnap = await getDoc(userRef);
 
-            await updateDoc(transactionRef, updatedData);
+            // if (userSnap.exists()) {
+            //     const userData = userSnap.data();
 
-            const amountDifference = amountValue - oldAmountValue;
-            const userSnap = await getDoc(userRef);
+            //     let currentOverallBudget = userData.overallBudget || 0;
+            //     let newOverallBudget = currentOverallBudget;
+            //     if (transactionType === 'expense') {
+            //         newOverallBudget -= amountDifference;
+            //     }
 
-            if (userSnap.exists()) {
-                const userData = userSnap.data();
-
-                let currentOverallBudget = userData.overallBudget || 0;
-                let newOverallBudget = currentOverallBudget;
-                if (transactionType === 'expense') {
-                    newOverallBudget -= amountDifference;
-                } else if (transactionType === 'income') {
-                    newOverallBudget += amountDifference;
-                }
-
-                await updateDoc(userRef, { overallBudget: newOverallBudget });
-            }
+            //     await updateDoc(userRef, { overallBudget: newOverallBudget });
+            // }
 
             setTransaction((prev: any) => ({ ...prev, ...updatedData }));
 

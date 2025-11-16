@@ -70,7 +70,7 @@ const AddTransaction: React.FC = () => {
         transactionsSnap.forEach((doc) => {
           const t = doc.data();
           if (t.type === 'income') totalIncome += t.amount;
-          if (t.type === 'expense') totalExpense += t.amount;
+          if (t.type === 'expense' && t.done) totalExpense += t.amount;
         });
 
         const currentBudget = totalIncome - totalExpense;
@@ -94,9 +94,7 @@ const AddTransaction: React.FC = () => {
         await addDoc(collection(db, 'users', user.uid, 'transactions'), transactionData);
 
         let newOverallBudget = currentBudget;
-        if (type === 'expense') {
-         newOverallBudget = currentBudget - numAmount;
-        }else if(type === 'income'){
+      if(type === 'income'){
           newOverallBudget = currentBudget + numAmount;
         }
 

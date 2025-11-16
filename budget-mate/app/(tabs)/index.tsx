@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { FlatList, StatusBar, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from "react-native";
-import {useRouter} from  'expo-router';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../context/AuthContext";
-import { collection, query, onSnapshot, doc, deleteDoc, updateDoc } from "firebase/firestore";
+import { collection, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 import ConfirmModal from '../../components/ui/ConfirmModal';
 import { Transaction, generateRandomTransactions } from "../../components/RandomTransaction";
@@ -14,10 +14,10 @@ export default function HomePage() {
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<any | null>(null);
-  const [modalAction, setModalAction] = useState< 'delete' | 'done' | null>(null);
+  const [modalAction, setModalAction] = useState<'delete' | 'done' | null>(null);
   const [firebaseTransactions, setFirebaseTransactions] = useState<Transaction[]>([]);
   const [apiTransactions, setApiTransactions] = useState<Transaction[]>([]);
-const router = useRouter();
+  const router = useRouter();
   useEffect(() => {
     if (!user) return;
 
@@ -38,10 +38,10 @@ const router = useRouter();
           paymentType: data.paymentType,
           payeeName: data.payeeName,
           date: data.date,
-          isExternalApi: false, 
+          isExternalApi: false,
         });
         if (data.type === "income") totalBalance += data.amount;
-        if (data.type === "expense") totalBalance -= data.amount;
+        if (data.type === "expense" && data.done) totalBalance -= data.amount;
       });
       setFirebaseTransactions(trans);
       setBalance(totalBalance);
@@ -64,13 +64,13 @@ const router = useRouter();
 
   const deleteTransaction = async (txn: Transaction) => {
     if (!user) return;
-    try{
+    try {
       if (txn.isExternalApi) {
         setApiTransactions((prev) => prev.filter((t) => t.id !== txn.id));
       } else if (user) {
         await deleteDoc(doc(db, "users", user.uid, "transactions", txn.id));
       }
-    } catch(err){
+    } catch (err) {
       console.error(err);
     }
   };
@@ -79,14 +79,33 @@ const router = useRouter();
     if (!user) return;
     try {
       if (txn.isExternalApi) {
-      setApiTransactions((prev) =>
-        prev.map((t) => (t.id === txn.id ? { ...t, done: true } : t))
-      );
-    } else if (user) {
-      await updateDoc(doc(db, "users", user.uid, "transactions", txn.id), {
-        done: true,
-      });
-    }
+        setApiTransactions((prev) =>
+          prev.map((t) => (t.id === txn.id ? { ...t, done: true } : t))
+        );
+      } else if (user) {
+        try {
+          const transactionRef = doc(db, "users", user.uid, "transactions", txn.id);
+          const userRef = doc(db, 'users', user.uid);
+
+          await updateDoc(transactionRef, {
+            done: true,
+          });
+
+          const userSnap = await getDoc(userRef);
+
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            let currentOverallBudget = userData.overallBudget || 0;
+
+            const expenseAmount = txn.amount;
+            let newOverallBudget = currentOverallBudget - expenseAmount;
+
+            await updateDoc(userRef, { overallBudget: newOverallBudget });
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
 
     } catch (err) {
       console.error(err);
@@ -103,8 +122,8 @@ const router = useRouter();
     setModalVisible(true);
   };
 
-   const handleDonePress = (txn : Transaction) => {
-    if(txn.isExternalApi) return;
+  const handleDonePress = (txn: Transaction) => {
+    if (txn.isExternalApi) return;
     setSelectedTransaction(txn);
     setModalAction("done");
     setModalVisible(true);
@@ -132,7 +151,7 @@ const router = useRouter();
     (t) => t.type === "expense" && !t.done
   );
 
-  const renderExpense = ({ item }: {item : Transaction}) => (
+  const renderExpense = ({ item }: { item: Transaction }) => (
     <View style={styles.expenseItem}>
       <View>
         <Text style={styles.expenseTitle}>{item.category}
@@ -148,12 +167,12 @@ const router = useRouter();
           <Text style={{ color: "white" }}>Delete</Text>
         </TouchableOpacity>
         {!item.isExternalApi && (
-        <TouchableOpacity
-          style={[styles.btn, { backgroundColor: "#34C759" }]}
-          onPress={() => handleDonePress(item)}
-        >
-          <Text style={{ color: "white" }}>Done</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.btn, { backgroundColor: "#34C759" }]}
+            onPress={() => handleDonePress(item)}
+          >
+            <Text style={{ color: "white" }}>Done</Text>
+          </TouchableOpacity>
         )}
         {!item.isExternalApi && (
           <TouchableOpacity
@@ -294,8 +313,8 @@ const styles = StyleSheet.create({
     lineHeight: 22
   },
   expenseNote: {
-     fontSize: 12,
-     color: "#555",
-     marginTop: 4 
+    fontSize: 12,
+    color: "#555",
+    marginTop: 4
   },
 });
