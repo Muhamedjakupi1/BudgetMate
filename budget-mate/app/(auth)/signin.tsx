@@ -78,8 +78,14 @@ export default function SignInScreen() {
       }, 1500);
     } catch (err: any) {
       console.error('Login error', err);
+
+      let message = err.message || "Login failed";
+      if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found" || err.code === "auth/invalid-credential") {
+        message = "Wrong password or username";
+      }
+
       setStatusType("error");
-      setSuccessMessage(err.message || "Login failed");
+      setSuccessMessage(message);
       setSuccessModalVisible(true);
       setTimeout(() => {
         setSuccessModalVisible(false);
@@ -98,12 +104,12 @@ export default function SignInScreen() {
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
       if (!userSnap.exists()) {
-      await setDoc(userRef, {
-        email: user.email,
-        displayName: user.displayName,
-        overallBudget: 0 
-      });
-    }
+        await setDoc(userRef, {
+          email: user.email,
+          displayName: user.displayName,
+          overallBudget: 0
+        });
+      }
       setStatusType("success");
       setSuccessModalVisible(true);
       setSuccessMessage("Successfully Signed In!");
