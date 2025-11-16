@@ -10,6 +10,7 @@ type Transaction = {
   id: string;
   type: 'income' | 'expense';
   amount: number;
+  done: boolean;
 };
 
 const Profile = () => {
@@ -32,6 +33,7 @@ const Profile = () => {
           id: doc.id,
           type: data.type,
           amount: typeof data.amount === 'number' ? data.amount : parseFloat(data.amount) || 0,
+          done: data.done || false,
         };
       });
       setTransactions(docs);
@@ -44,11 +46,11 @@ const Profile = () => {
     .filter((t) => t.type === 'income')
     .reduce((sum, t) => sum + t.amount, 0);
   const totalExpense = transactions
-    .filter((t) => t.type === 'expense')
+    .filter((t) => t.type === 'expense' && t.done)
     .reduce((sum, t) => sum + t.amount, 0);
 
   const balance = totalIncome - totalExpense;
-  const totalDoneExpenses = transactions.filter((t) => t.type === 'expense').length;
+  const totalDoneExpenses = transactions.filter((t) => t.type === 'expense' && t.done).length;
 
   const { logout } = useAuth();
   const handleLogout = async () => {
