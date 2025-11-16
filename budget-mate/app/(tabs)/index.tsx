@@ -17,6 +17,8 @@ export default function HomePage() {
   const [modalAction, setModalAction] = useState<'delete' | 'done' | null>(null);
   const [firebaseTransactions, setFirebaseTransactions] = useState<Transaction[]>([]);
   const [apiTransactions, setApiTransactions] = useState<Transaction[]>([]);
+  const [statusModalVisible, setStatusModalVisible] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
   const router = useRouter();
   useEffect(() => {
     if (!user) return;
@@ -95,11 +97,15 @@ export default function HomePage() {
       const currentOverallBudget = userSnap.data().overallBudget || 0;
 
       if (txn.amount > currentOverallBudget) {
-        setModalVisible(true);
+        setModalVisible(false);
         setModalAction(null);
-        alert("Not enough budget to mark this expense as done.");
+
+        setStatusMessage("⚠️ Not enough budget to complete this expense!");
+        setStatusModalVisible(true);
+
         return;
       }
+
 
       // Update transaction
       await updateDoc(transactionRef, { done: true });
@@ -234,6 +240,13 @@ export default function HomePage() {
         showConfirm={true}
         onClose={() => setModalVisible(false)}
         onConfirm={handleConfirm}
+      />
+      <ConfirmModal
+        visible={statusModalVisible}
+        type="error"
+        message={statusMessage}
+        showConfirm={false}      // vetëm OK button
+        onClose={() => setStatusModalVisible(false)}
       />
     </SafeAreaView>
   );
