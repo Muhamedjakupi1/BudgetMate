@@ -242,7 +242,7 @@ export default function HomePage() {
         visible={statusModalVisible}
         type="error"
         message={statusMessage}
-        showConfirm={false}      // vetëm OK button
+        showConfirm={false}      
         onClose={() => setStatusModalVisible(false)}
       />
     </SafeAreaView>

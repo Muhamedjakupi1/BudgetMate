@@ -70,11 +70,14 @@ export default function SignUpScreen() {
       isValid = false;
     }
 
-    if (password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+    if (!passwordRegex.test(password)) {
+      newErrors.password = "Password must be at least 8 characters and include uppercase, lowercase, a number, and a special character.";
       isValid = false;
     }
-
+    
     if (password !== confirm) {
       newErrors.confirm = "Passwords do not match";
       isValid = false;
