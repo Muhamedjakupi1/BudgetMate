@@ -79,38 +79,40 @@ export default function HomePage() {
     if (!user) return;
     try {
       if (txn.isExternalApi) {
-        setApiTransactions((prev) =>
+        setApiTransactions(prev =>
           prev.map((t) => (t.id === txn.id ? { ...t, done: true } : t))
         );
-      } else if (user) {
-        try {
-          const transactionRef = doc(db, "users", user.uid, "transactions", txn.id);
-          const userRef = doc(db, 'users', user.uid);
-
-          await updateDoc(transactionRef, {
-            done: true,
-          });
-
-          const userSnap = await getDoc(userRef);
-
-          if (userSnap.exists()) {
-            const userData = userSnap.data();
-            let currentOverallBudget = userData.overallBudget || 0;
-
-            const expenseAmount = txn.amount;
-            let newOverallBudget = currentOverallBudget - expenseAmount;
-
-            await updateDoc(userRef, { overallBudget: newOverallBudget });
-          }
-        } catch (err) {
-          console.error(err);
-        }
+        return;
       }
+
+      const transactionRef = doc(db, "users", user.uid, "transactions", txn.id);
+      const userRef = doc(db, 'users', user.uid);
+
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) return;
+
+      const currentOverallBudget = userSnap.data().overallBudget || 0;
+
+      if (txn.amount > currentOverallBudget) {
+        setModalVisible(true);
+        setModalAction(null);
+        alert("Not enough budget to mark this expense as done.");
+        return;
+      }
+
+      // Update transaction
+      await updateDoc(transactionRef, { done: true });
+
+      // Update budget
+      const newOverallBudget = currentOverallBudget - txn.amount;
+      await updateDoc(userRef, { overallBudget: newOverallBudget });
 
     } catch (err) {
       console.error(err);
     }
   };
+
 
   const handleEditPress = (txn: Transaction) => {
     if (!txn.isExternalApi) router.push(`/expense/${txn.id}`)
