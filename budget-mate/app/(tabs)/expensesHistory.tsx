@@ -5,6 +5,7 @@ import { useFocusEffect } from "expo-router";
 import { collection, query, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
+import { Ionicons } from '@expo/vector-icons';
 
 export default function ExpensesHistory() {
   const { user } = useAuth();
@@ -38,7 +39,10 @@ export default function ExpensesHistory() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>✅ Expenses History</Text>
+      <Text style={styles.title}>
+        <Ionicons name="checkmark-done-outline" size={24} color="green" /> 
+        <View style={{ width: 8 }} />
+        Expenses History</Text>
       <View style={styles.contentContainer}>
         {expenses.length === 0 ? (
           <Text style={styles.noExpenses}>No expenses done yet</Text>
@@ -55,7 +59,7 @@ export default function ExpensesHistory() {
                     <Text>{item.note}</Text>
                   </View>
                   <View style={styles.rightColumn}>
-                    <Text style={styles.expenseAmount}>${item.amount}</Text>
+                    <Text style={styles.expenseAmount}>€{item.amount.toFixed(2)}</Text>
                     <Text>{item.payeeName}</Text>
                     <Text>{item.paymentType}</Text>
                   </View>
@@ -64,7 +68,7 @@ export default function ExpensesHistory() {
             />
             <View style={styles.total}>
               <Text>Total spent:</Text>
-              <Text>${total}</Text>
+              <Text>€{total.toFixed(2)}</Text>
             </View>
           </>
         )}
@@ -80,7 +84,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20, 
     paddingTop: 20 },
   title: { 
-    fontSize: 18, 
+    fontSize: 24, 
     fontWeight: "bold", 
     textAlign: "center", 
     marginVertical: 20 },

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Button, StyleSheet, StatusBar } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Pressable, StyleSheet, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FormInput from '../../components/ui/textinput';
 import { doc, getDoc, addDoc, collection, updateDoc, getDocs } from "firebase/firestore";
@@ -96,7 +96,7 @@ const AddTransaction: React.FC = () => {
         setStatusType("error");
         setSuccessMessage(`⚠️ Not enough budget! You have ${currentBudget} left.`);
         setSuccessModalVisible(true);
-        setTimeout(() => setSuccessModalVisible(false), 1500);
+        setTimeout(() => setSuccessModalVisible(false), 900);
         return;
       }
 
@@ -131,14 +131,14 @@ const AddTransaction: React.FC = () => {
       setStatusType("success");
       setSuccessMessage(type === 'expense' ? "Expense has been saved successfully!" : "Income has been saved successfully!");
       setSuccessModalVisible(true);
-      setTimeout(() => setSuccessModalVisible(false), 1500);
+      setTimeout(() => setSuccessModalVisible(false), 900);
 
     } catch (error) {
       console.error('Error saving transaction:', error);
       setStatusType("error");
       setSuccessMessage("Couldn't save transaction. Check budget and try again.");
       setSuccessModalVisible(true);
-      setTimeout(() => setSuccessModalVisible(false), 1500);
+      setTimeout(() => setSuccessModalVisible(false), 900);
     }
   };
 
@@ -230,9 +230,21 @@ const AddTransaction: React.FC = () => {
             </>
           )}
 
-          <View style={{ marginTop: 20 }}>
-            <Button title={"Save Transaction"} onPress={handleSave} color="#518e59ff" />
-          </View>
+          <Pressable
+            onPress={handleSave}
+            style={{
+              backgroundColor: "#518e59ff",
+              padding: 12,
+              borderRadius: 8,
+              alignItems: "center",
+              marginTop: 20,
+            }}
+          >
+            <Text style={{ color: "white", fontSize: 16, fontWeight: 'bold'}}>
+              Save Transaction
+            </Text>
+          </Pressable>
+
         </ScrollView>
       </View>
 
@@ -272,11 +284,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   },
   activeNav: {
-    backgroundColor: '#518e59ff'
+    backgroundColor: '#518e59ff',
   },
   navText: {
     fontWeight: 'bold',
-    color: '#000'
+    color: '#f2ebebff',
+    fontSize: 16,
   },
   form: {
     paddingBottom: 40

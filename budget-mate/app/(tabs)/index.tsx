@@ -7,6 +7,7 @@ import { collection, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc } from
 import { db } from "../../firebase";
 import ConfirmModal from '../../components/ui/ConfirmModal';
 import { Transaction, generateRandomTransactions } from "../../components/RandomTransaction";
+import { Ionicons } from '@expo/vector-icons';
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -166,25 +167,25 @@ export default function HomePage() {
       </View>
       <View style={styles.buttonsContainer}>
         <TouchableOpacity
-          style={[styles.btn, { backgroundColor: "#FF3B30" }]}
+          style={[styles.btn, { backgroundColor: "#d41309ff" }]}
           onPress={() => handleDeletePress(item)}
         >
-          <Text style={{ color: "white" }}>Delete</Text>
+          <Text style={{ color: "white", fontWeight: 500 }}>Delete</Text>
         </TouchableOpacity>
         {!item.isExternalApi && (
           <TouchableOpacity
-            style={[styles.btn, { backgroundColor: "#34C759" }]}
+            style={[styles.btn, { backgroundColor: "#518e59ff" }]}
             onPress={() => handleDonePress(item)}
           >
-            <Text style={{ color: "white" }}>Done</Text>
+            <Text style={{ color: "white", fontWeight: 500 }}>Done</Text>
           </TouchableOpacity>
         )}
         {!item.isExternalApi && (
           <TouchableOpacity
-            style={[styles.btn, { backgroundColor: "#007AFF" }]}
+            style={[styles.btn, { backgroundColor: "#34aac7" }]}
             onPress={() => handleEditPress(item)}
           >
-            <Text style={{ color: "white" }}>Edit</Text>
+            <Text style={{ color: "white" , fontWeight: 500}}>Edit</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -195,7 +196,10 @@ export default function HomePage() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="white" />
       <View style={styles.header}>
-        <Text style={styles.budgetText}>💵 Budget: €{balance.toFixed(2)}</Text>
+        <Text style={styles.budgetText}>
+          <Ionicons name="cash" size={24} color="green" />
+          <View style={{ width: 8 }} />
+           Budget: €{balance.toFixed(2)}</Text>
       </View>
       <TouchableOpacity
         style={[styles.btn, { backgroundColor: "#34aac7", marginBottom: 20 }]}
@@ -263,7 +267,7 @@ const styles = StyleSheet.create({
     marginBottom: 20
   },
   budgetText: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: "bold",
     color: "#333"
   },
@@ -314,7 +318,7 @@ const styles = StyleSheet.create({
   noExpenseTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#2E8B57",
+    color: "#518e59ff",
     textAlign: "center",
     marginBottom: 10
   },
