@@ -142,7 +142,6 @@ const AddTransaction: React.FC = () => {
     }
   };
 
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="white" />
@@ -165,12 +164,13 @@ const AddTransaction: React.FC = () => {
 
         <ScrollView contentContainerStyle={styles.form}>
           <Text style={styles.label}>Amount</Text>
-          <FormInput
-            value={amount}
-            onChangeText={setAmount}
-            keyboardType="numeric"
-            placeholder="Enter amount"
-          />
+
+            <FormInput
+              value={amount}
+              onChangeText={setAmount}
+              keyboardType="numeric"
+              placeholder="Enter amount (€)"
+            />
 
           {type === 'expense' && (
             <>

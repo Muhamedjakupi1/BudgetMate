@@ -70,11 +70,11 @@ const Profile = () => {
 
         <View style={styles.statsContainer}>
           <View style={styles.statBox}>
-            <Text style={styles.statNumber}>${balance.toFixed(2)}</Text>
+            <Text style={styles.statNumber}>€{balance.toFixed(2)}</Text>
             <Text style={styles.statLabel}>Budget</Text>
           </View>
           <View style={styles.statBox}>
-            <Text style={styles.statNumber}>${totalExpense.toFixed(2)}</Text>
+            <Text style={styles.statNumber}>€{totalExpense.toFixed(2)}</Text>
             <Text style={styles.statLabel}>Spent</Text>
           </View>
           <View style={styles.statBox}>

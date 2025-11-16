@@ -106,11 +106,8 @@ export default function HomePage() {
         return;
       }
 
-
-      // Update transaction
       await updateDoc(transactionRef, { done: true });
 
-      // Update budget
       const newOverallBudget = currentOverallBudget - txn.amount;
       await updateDoc(userRef, { overallBudget: newOverallBudget });
 
@@ -198,7 +195,7 @@ export default function HomePage() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="white" />
       <View style={styles.header}>
-        <Text style={styles.budgetText}>💵 Budget: ${balance}</Text>
+        <Text style={styles.budgetText}>💵 Budget: €{balance.toFixed(2)}</Text>
       </View>
       <TouchableOpacity
         style={[styles.btn, { backgroundColor: "#34aac7", marginBottom: 20 }]}
