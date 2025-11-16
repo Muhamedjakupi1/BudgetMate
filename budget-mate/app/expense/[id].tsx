@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { View, Text, ActivityIndicator, StyleSheet, TextInput, TouchableOpacity, ScrollView, Button } from "react-native";
+import { View, Text, ActivityIndicator, StyleSheet, TextInput, TouchableOpacity, ScrollView, Button} from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
@@ -74,7 +75,6 @@ export default function TransactionDetail() {
         if (!user || !id || !transaction) return;
 
         const amountValue = parseFloat(newAmount);
-        //const oldAmountValue = transaction.amount;
         const transactionType = transaction.type;
 
         if (isNaN(amountValue) || amountValue <= 0) {
@@ -102,22 +102,7 @@ export default function TransactionDetail() {
         try {
             const transactionRef = doc(db, "users", user.uid, "transactions", id as string);
           await updateDoc(transactionRef, updatedData);
-          //  const userRef = doc(db, 'users', user.uid);
-
-            //const userSnap = await getDoc(userRef);
-
-            // if (userSnap.exists()) {
-            //     const userData = userSnap.data();
-
-            //     let currentOverallBudget = userData.overallBudget || 0;
-            //     let newOverallBudget = currentOverallBudget;
-            //     if (transactionType === 'expense') {
-            //         newOverallBudget -= amountDifference;
-            //     }
-
-            //     await updateDoc(userRef, { overallBudget: newOverallBudget });
-            // }
-
+         
             setTransaction((prev: any) => ({ ...prev, ...updatedData }));
 
             setModalType("success");
@@ -158,6 +143,7 @@ export default function TransactionDetail() {
     };
 
     return (
+        <SafeAreaView style={styles.safeArea}>
         <ScrollView style={styles.container}>
             <Text style={styles.title}>Update Expense</Text>
 
@@ -237,10 +223,15 @@ export default function TransactionDetail() {
                 type={modalType}
             />
         </ScrollView>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
+    safeArea: {
+        flex: 1,
+        backgroundColor: '#f7f7f7'
+    },
     container: {
         flex: 1,
         padding: 20,
