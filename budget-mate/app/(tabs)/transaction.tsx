@@ -233,7 +233,7 @@ const AddTransaction: React.FC = () => {
           <Pressable
             onPress={handleSave}
             style={{
-              backgroundColor: "#518e59ff",
+              backgroundColor: "#34aac7",
               padding: 12,
               borderRadius: 8,
               alignItems: "center",
@@ -284,11 +284,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   },
   activeNav: {
-    backgroundColor: '#518e59ff',
+    backgroundColor: '#34aac7',
   },
   navText: {
     fontWeight: 'bold',
-    color: '#f2ebebff',
+    color: 'white',
     fontSize: 16,
   },
   form: {

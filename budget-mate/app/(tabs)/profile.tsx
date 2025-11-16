@@ -74,7 +74,7 @@ const Profile = () => {
             <Text style={styles.statLabel}>Budget</Text>
           </View>
           <View style={styles.statBox}>
-            <Text style={styles.statNumber}>€{totalExpense.toFixed(2)}</Text>
+            <Text style={styles.statNumber}>{totalExpense.toFixed(2)}</Text>
             <Text style={styles.statLabel}>Spent</Text>
           </View>
           <View style={styles.statBox}>
@@ -84,10 +84,10 @@ const Profile = () => {
         </View>
 
         <TouchableOpacity
-          style={[styles.button, { backgroundColor: '#FF3B30' }]}
+          style={[styles.button, { backgroundColor: '#d41309ff' }]}
           onPress={handleLogout}
         >
-          <Text style={styles.buttonText}>Logout</Text>
+          <Text style={styles.buttonText}>Log Out</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -112,11 +112,11 @@ const styles = StyleSheet.create({
     borderRadius: 50, 
     marginBottom: 15 },
   userName: { 
-    fontSize: 22, 
+    fontSize: 24, 
     fontWeight: 'bold', 
     color: '#333' },
   userEmail: { 
-    fontSize: 16, 
+    fontSize: 18, 
     color: '#777' },
   statsContainer: {
     flexDirection: 'row',
