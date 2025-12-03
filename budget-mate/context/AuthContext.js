@@ -1,27 +1,48 @@
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { createContext, useContext, useEffect, useState } from "react";
-import { auth } from "../firebase";
+import { auth, db } from "../firebase";
+import {router} from 'expo-router';
+import { doc, getDoc } from "firebase/firestore";
 
 const AuthContext = createContext();
 
-export const AuthProvider = ({children}) => {
-    const [user, setUser] = useState(null)
+export const AuthProvider = ({ children }) => {
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
-                setUser(user);
+                const userRef = doc(db, "users", user.uid);
+                const data = await getDoc(userRef);
+                const updatedUser = data.exists() ? data.data() : {};
+                setUser({
+                    id: user.uid,
+                    email: user.email,
+                    image: user.image || null,
+                    ...updatedUser
+                });
+                setLoading(false);
+            } else {
+                setUser(null);
+                setLoading(false);
+                router.replace('/login');
             }
         })
         return () => unsubscribe();
     }, [])
 
     const logout = async () => {
-        await signOut(auth);
+        try {
+            await signOut(auth);
+            router.replace('/login');
+        } catch (error) {
+            console.error("Error signing out: ", error);
+        }
     }
 
     return (
-        <AuthContext.Provider value={{user, logout}}>
+        <AuthContext.Provider value={{ user, logout, loading, setUser }}>
             {children}
         </AuthContext.Provider>
     )
