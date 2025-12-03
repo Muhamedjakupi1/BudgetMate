@@ -162,7 +162,7 @@ export default function HomePage() {
       <View>
         <Text style={styles.expenseTitle}>{item.category}
           {item.isExternalApi ? "(FAKE)" : ""}</Text>
-        <Text style={styles.expenseAmount}>${item.amount}</Text>
+        <Text style={styles.expenseAmount}>€{item.amount}</Text>
         {item.note && <Text style={styles.expenseNote}>{item.note}</Text>}
       </View>
       <View style={styles.buttonsContainer}>
