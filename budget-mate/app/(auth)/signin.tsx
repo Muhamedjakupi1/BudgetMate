@@ -67,7 +67,6 @@ export default function SignInScreen() {
       const userRef = doc(db, 'users', user.uid);
       const userSnap = await getDoc(userRef);
 
-      console.log('Logged in user:', user.uid, user.email, userSnap.data());
       setStatusType("success");
       setSuccessModalVisible(true);
       setSuccessMessage("Successfully Signed In!");
