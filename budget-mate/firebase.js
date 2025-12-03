@@ -1,15 +1,12 @@
-// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { 
-  getAuth, 
-  initializeAuth, 
-  GoogleAuthProvider,
-  getReactNativePersistence // Important for React Native persistence
-} from "firebase/auth";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
 // Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyBGq-YDuolUWFI_FFPBvwvRvwnPLjeFGII",
   authDomain: "budgetmate-1b9b3.firebaseapp.com",
@@ -20,23 +17,11 @@ const firebaseConfig = {
   measurementId: "G-DRG1Z04DN6"
 };
 
-// 1. Initialize the Firebase app
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+export const db = getFirestore(app);
 
-// 2. Initialize Auth with React Native Persistence
-// Note: In React Native, you often need to use initializeAuth 
-// with getReactNativePersistence to prevent "memory persistence" 
-// (which would log the user out on app close).
-const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(AsyncStorage)
-});
+export const googleProvider = new GoogleAuthProvider();
 
-// 3. Initialize Firestore
-const db = getFirestore(app);
-
-// 4. Initialize the Google Auth Provider
-const googleProvider = new GoogleAuthProvider();
-
-// 5. Export services and the app instance
-export { auth, db, googleProvider };
 export default app;
