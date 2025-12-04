@@ -131,7 +131,10 @@ const AddTransaction: React.FC = () => {
       setStatusType("success");
       setSuccessMessage(type === 'expense' ? "Expense has been saved successfully!" : "Income has been saved successfully!");
       setSuccessModalVisible(true);
-      setTimeout(() => setSuccessModalVisible(false), 900);
+      setTimeout(() => {
+        setSuccessModalVisible(false);
+        router.push('/(tabs)');
+      }, 900);
 
     } catch (error) {
       console.error('Error saving transaction:', error);
