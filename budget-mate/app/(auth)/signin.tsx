@@ -41,7 +41,12 @@ export default function SignInScreen() {
 
   const validateInputs = () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Error', 'Please fill in all fields');
+      setStatusType("error");
+      setSuccessMessage("Please fill in all fields");
+      setSuccessModalVisible(true)
+      setTimeout(()=> {
+        setSuccessModalVisible(false)
+      }, 1500);
       return false;
     }
 
@@ -76,7 +81,6 @@ export default function SignInScreen() {
         router.push('../(tabs)');
       }, 1500);
     } catch (err: any) {
-      console.error('Login error', err);
 
       let message = err.message || "Login failed";
       if (err.code === "auth/wrong-password" || err.code === "auth/user-not-found" || err.code === "auth/invalid-credential") {
