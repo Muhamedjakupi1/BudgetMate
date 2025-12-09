@@ -1,13 +1,22 @@
+// app/(tabs)/profile.tsx
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Image, TouchableOpacity, StatusBar, ActivityIndicator } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  TouchableOpacity,
+  StatusBar,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { db } from '../../firebase';
-import { onSnapshot, collection } from 'firebase/firestore';
+import { onSnapshot, collection, doc, updateDoc } from 'firebase/firestore';
 import { router } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import * as ImagePicker from 'expo-image-picker';
-import ConfirmModal from '../../components/ui/ConfirmModal'
-import { doc, updateDoc } from 'firebase/firestore'
+import ConfirmModal from '../../components/ui/ConfirmModal';
 
 type Transaction = {
   id: string;
@@ -17,174 +26,204 @@ type Transaction = {
 };
 
 const Profile = () => {
-  const { user: currentUser, logout, loading, setUser } = useAuth();
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const userName = currentUser?.displayName || 'No Name';
-  const userEmail = currentUser?.email || 'No Email';
-  const [modalType, setModalType] = useState("");
-  const [modalMessage, setModalMessage] = useState('');
-  const [modalVisible, setModalVisible] = useState(false);
+  const { user: currentUser, logout, loading: authLoading, setUser } = useAuth();
 
-  const showModal = (type: string, message: string) => {
-    setModalType(type);
-    setModalMessage(message);
-    setModalVisible(true);
-  }
-
-  const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      showModal('error', 'Permission to access media library is required!');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.5,
-      base64: true,
-    });
-
-    if (!result.canceled) {
-      const base64Img = `data:image/jpg;base64,${result.assets[0].base64}`;
-      const userRef = doc(db, "users", currentUser.uid);
-
-      try {
-        await updateDoc(userRef, { image: base64Img });
-        setUser((prev: any) => {
-          if (!prev) return prev;
-          return { ...prev, image: base64Img };
-        });
-        showModal("success", "Profile image updated successfully!");
-      } catch {
-        showModal("error", "Image cannot be updated. Please try again!");
-      }
-    }
-  };
-
-
-  const takePhoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-
-    if (status !== 'granted') {
-      showModal("error", "Permission to access camera is required!");
-      return;
-    }
-
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.5,
-      base64: true,
-    });
-
-    if (!result.canceled) {
-      const base64Img = `data:image/jpg;base64,${result.assets[0].base64}`;
-      const userRef = doc(db, "users", currentUser.uid);
-
-      try {
-        await updateDoc(userRef, { image: base64Img });
-        setUser((prev: any) => {
-          if (!prev) return prev;
-          return { ...prev, image: base64Img };
-        });
-        showModal("success", "Photo uploaded successfully!");
-      } catch {
-        showModal("error", "Image cannot be uploaded. Please try again!");
-      }
-    }
-  };
-
-  const removePhoto = async () => {
-    const userRef = doc(db, "users", currentUser.uid);
-
-    try {
-      await updateDoc(userRef, { image: null });
-
-      setUser((prev: any) => {
-        if (!prev) return prev;
-        return { ...prev, image: null };
-      });
-
-      showModal("success", "Profile photo removed!");
-    } catch {
-      showModal("error", "Could not remove photo. Please try again!");
-    }
-  };
-
-  const handleModalClose = () => {
-    setModalVisible(false);
-  }
-
-  if (loading || !currentUser) {
+  // Loading & auth guard
+  if (authLoading) {
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.welcome}>Loading user info...</Text>
+        <Text style={styles.loadingText}>Loading profile...</Text>
       </View>
-    )
+    );
   }
 
-  useEffect(() => {
-    if (!currentUser) return;
+  if (!currentUser) {
+    useEffect(() => {
+      router.replace('/(auth)');
+    }, []);
+    return null;
+  }
 
+  // State
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Modal states
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [toastMessage, setToastMessage] = useState('');
+
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<'removePhoto' | 'logout' | null>(null);
+
+  const userName = currentUser.displayName || 'No Name';
+  const userEmail = currentUser.email || 'No Email';
+  const userPhoto = currentUser.image || null;
+
+  // Toast helper
+  const showToast = (type: 'success' | 'error', message: string) => {
+    setToastType(type);
+    setToastMessage(message);
+    setToastVisible(true);
+  };
+
+  // Confirm helper
+  const openConfirm = (action: 'removePhoto' | 'logout') => {
+    setConfirmAction(action);
+    setConfirmVisible(true);
+  };
+
+  // Fetch transactions
+  useEffect(() => {
     const transactionsRef = collection(db, 'users', currentUser.uid, 'transactions');
     const unsubscribe = onSnapshot(transactionsRef, (snapshot) => {
-      const docs = snapshot.docs.map((doc) => {
-        const data = doc.data();
+      const docs = snapshot.docs.map((docSnap) => {
+        const data = docSnap.data();
         return {
-          id: doc.id,
-          type: data.type,
+          id: docSnap.id,
+          type: data.type as 'income' | 'expense',
           amount: typeof data.amount === 'number' ? data.amount : parseFloat(data.amount) || 0,
-          done: data.done || false,
+          done: !!data.done,
         };
       });
       setTransactions(docs);
     });
 
     return () => unsubscribe();
-  }, [currentUser]);
+  }, [currentUser.uid]);
 
+  // Image Picker
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      showToast('error', 'Need permission to access photos!');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets[0].base64) {
+      await uploadImage(result.assets[0].base64);
+    }
+  };
+
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      showToast('error', 'Need camera permission!');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets[0].base64) {
+      await uploadImage(result.assets[0].base64);
+    }
+  };
+
+  const uploadImage = async (base64: string) => {
+    const base64Img = `data:image/jpeg;base64,${base64}`;
+    const userRef = doc(db, 'users', currentUser.uid);
+
+    try {
+      await updateDoc(userRef, { image: base64Img });
+      setUser((prev: any) => ({ ...prev, image: base64Img }));
+      showToast('success', 'Profile picture updated!');
+    } catch (err) {
+      showToast('error', 'Failed to upload image');
+    }
+  };
+
+  const handleRemovePhoto = async () => {
+    if (!userPhoto) {
+      showToast('error', 'No profile picture to remove!');
+      return;
+    }
+
+    openConfirm('removePhoto');
+  };
+
+  const confirmRemovePhoto = async () => {
+    const userRef = doc(db, 'users', currentUser.uid);
+    try {
+      await updateDoc(userRef, { image: null });
+      setUser((prev: any) => ({ ...prev, image: null }));
+      showToast('success', 'Profile picture removed');
+    } catch {
+      showToast('error', 'Failed to remove photo');
+    }
+    setConfirmVisible(false);
+  };
+
+  const handleLogout = () => {
+    openConfirm('logout');
+  };
+
+  const confirmLogout = async () => {
+    setIsLoggingOut(true);
+    router.replace('/(auth)');
+    try {
+      await logout();
+    } catch (err) {
+      console.warn('Logout failed (already navigated)');
+    }
+  };
+
+  // Calculations
   const totalIncome = transactions
     .filter((t) => t.type === 'income')
     .reduce((sum, t) => sum + t.amount, 0);
+
   const totalExpense = transactions
     .filter((t) => t.type === 'expense' && t.done)
     .reduce((sum, t) => sum + t.amount, 0);
 
   const balance = totalIncome - totalExpense;
-  const totalDoneExpenses = transactions.filter((t) => t.type === 'expense' && t.done).length;
-
-  const handleLogout = async () => {
-    await logout();
-    router.replace('.././(auth)');
-  };
+  const doneExpensesCount = transactions.filter((t) => t.type === 'expense' && t.done).length;
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="white" />
+      <StatusBar barStyle="dark-content" backgroundColor="#f7f7f7" />
+
       <View style={styles.sContainer}>
+        {/* Profile Header */}
         <View style={styles.profileHeader}>
-          {currentUser.image ? (
-            <Image style={{ width: 120, height: 120, borderRadius: 60, marginBottom: 20 }} source={{ uri: currentUser.image }} />
+          {userPhoto ? (
+            <Image style={styles.profileImage} source={{ uri: userPhoto }} />
           ) : (
-            <View style={{ width: 120, height: 120, borderRadius: 60, backgroundColor: "#E5E7EB", justifyContent: "center", alignItems: "center", marginBottom: 20 }}>
-              <Text>No image</Text>
+            <View style={styles.placeholder}>
+              <Text style={styles.placeholderText}>No Photo</Text>
             </View>
           )}
+
           <View style={styles.buttonRow}>
             <TouchableOpacity style={styles.smallButton} onPress={pickImage}>
-              <Text style={styles.buttonText}>Pick Image</Text>
+              <Text style={styles.btnText}>Pick Image</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.smallButton, { backgroundColor: "#555" }]} onPress={takePhoto}>
-              <Text style={styles.buttonText}>Take Photo</Text>
+            <TouchableOpacity style={[styles.smallButton, { backgroundColor: '#444' }]} onPress={takePhoto}>
+              <Text style={styles.btnText}>Take Photo</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.smallButton, { backgroundColor: "#d11" }]} onPress={removePhoto}>
-              <Text style={styles.buttonText}>Remove Image</Text>
+            <TouchableOpacity
+              style={[styles.smallButton, { backgroundColor: userPhoto ? '#d11a2a' : '#999' }]}
+              onPress={handleRemovePhoto}
+              disabled={!userPhoto}
+            >
+              <Text style={styles.btnText}>Remove</Text>
             </TouchableOpacity>
           </View>
 
@@ -192,120 +231,117 @@ const Profile = () => {
           <Text style={styles.userEmail}>{userEmail}</Text>
         </View>
 
+        {/* Stats */}
         <View style={styles.statsContainer}>
           <View style={styles.statBox}>
             <Text style={styles.statNumber}>€{balance.toFixed(2)}</Text>
-            <Text style={styles.statLabel}>Budget</Text>
+            <Text style={styles.statLabel}>Balance</Text>
           </View>
           <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{totalExpense.toFixed(2)}</Text>
+            <Text style={styles.statNumber}>€{totalExpense.toFixed(2)}</Text>
             <Text style={styles.statLabel}>Spent</Text>
           </View>
           <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{totalDoneExpenses}</Text>
+            <Text style={styles.statNumber}>{doneExpensesCount}</Text>
             <Text style={styles.statLabel}>Done</Text>
           </View>
         </View>
 
+        {/* Logout */}
         <TouchableOpacity
-          style={[styles.button, { backgroundColor: '#d41309ff' }]}
+          style={[styles.logoutBtn, { opacity: isLoggingOut ? 0.6 : 1 }]}
           onPress={handleLogout}
+          disabled={isLoggingOut}
         >
-          <Text style={styles.buttonText}>Log Out</Text>
+          <Text style={styles.logoutText}>
+            {isLoggingOut ? 'Logging out...' : 'Log Out'}
+          </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Toast Modal */}
+      <ConfirmModal
+        visible={toastVisible}
+        type={toastType}
+        message={toastMessage}
+        onClose={() => setToastVisible(false)}
+      />
+
+      {/* Confirm Modal (Remove Photo or Logout) */}
+      <ConfirmModal
+        visible={confirmVisible}
+        type="error"
+        message={
+          confirmAction === 'removePhoto'
+            ? 'Are you sure you want to remove your profile picture?'
+            : 'Are you sure you want to log out?'
+        }
+        onClose={() => setConfirmVisible(false)}
+        showConfirm={true}
+        onConfirm={() => {
+          if (confirmAction === 'removePhoto') {
+            confirmRemovePhoto();
+          } else if (confirmAction === 'logout') {
+            confirmLogout();
+          }
+        }}
+      />
     </SafeAreaView>
   );
 };
 
 export default Profile;
 
+// Styles
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f7f7f7'
-  },
-  sContainer: {
-    padding: 20,
-    alignItems: 'center'
-  },
-  profileHeader: {
+  container: { flex: 1, backgroundColor: '#f7f7f7' },
+  sContainer: { flex: 1, padding: 20, alignItems: 'center' },
+  loadingText: { marginTop: 15, fontSize: 16, color: '#666' },
+  profileHeader: { alignItems: 'center', marginBottom: 30 },
+  profileImage: { width: 120, height: 120, borderRadius: 60, marginBottom: 20 },
+  placeholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#e1e1e1',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 30
+    marginBottom: 20,
   },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 15
+  placeholderText: { color: '#888', fontSize: 14 },
+  buttonRow: { flexDirection: 'row', width: '100%', marginBottom: 20 },
+  smallButton: {
+    flex: 1,
+    backgroundColor: '#0066ff',
+    paddingVertical: 11,
+    borderRadius: 10,
+    marginHorizontal: 5,
+    alignItems: 'center',
   },
-  userName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333'
-  },
-  userEmail: {
-    fontSize: 18,
-    color: '#777'
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 30,
-  },
+  btnText: { color: '#fff', fontWeight: '600', fontSize: 13 },
+  userName: { fontSize: 24, fontWeight: 'bold', color: '#222' },
+  userEmail: { fontSize: 16, color: '#666', marginTop: 5 },
+  statsContainer: { flexDirection: 'row', width: '100%', marginBottom: 40 },
   statBox: {
     flex: 1,
     backgroundColor: '#fff',
-    marginHorizontal: 5,
-    borderRadius: 10,
-    padding: 15,
+    marginHorizontal: 6,
+    padding: 16,
+    borderRadius: 14,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  statNumber: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 5
-  },
-  statLabel: {
-    fontSize: 14,
-    color: '#777'
-  },
-  button: {
+  statNumber: { fontSize: 20, fontWeight: 'bold', color: '#222' },
+  statLabel: { fontSize: 13, color: '#777', marginTop: 5 },
+  logoutBtn: {
     width: '100%',
-    backgroundColor: '#007BFF',
-    paddingVertical: 12,
-    borderRadius: 10,
-    marginBottom: 15,
+    backgroundColor: '#d41309',
+    paddingVertical: 16,
+    borderRadius: 12,
     alignItems: 'center',
   },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 14
-  },
-  welcome: {
-    fontSize: 16,
-    marginTop: 10,
-    color: '#333'
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 20,
-  },
-  smallButton: {
-    flex: 1,
-    backgroundColor: '#03A9F4',
-    paddingVertical: 10,
-    borderRadius: 8,
-    marginHorizontal: 5,
-    alignItems: 'center',
-  },
-
+  logoutText: { color: '#fff', fontWeight: 'bold', fontSize: 17 },
 });
