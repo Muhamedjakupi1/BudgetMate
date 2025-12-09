@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   StatusBar,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { db } from '../../firebase';
@@ -28,7 +27,6 @@ type Transaction = {
 const Profile = () => {
   const { user: currentUser, logout, loading: authLoading, setUser } = useAuth();
 
-  // Loading & auth guard
   if (authLoading) {
     return (
       <View style={styles.container}>
@@ -38,6 +36,21 @@ const Profile = () => {
     );
   }
 
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalType, setModalType] = useState<'success' | 'error'>('success');
+  const [modalMessage, setModalMessage] = useState('');
+
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const [confirmAction, setConfirmAction] =
+    useState<'removePhoto' | 'logout' | null>(null);
+
+  const userName = currentUser.displayName || 'No Name';
+  const userEmail = currentUser.email || 'No Email';
+  const userPhoto = currentUser.image || null;
+
   if (!currentUser) {
     useEffect(() => {
       router.replace('/(auth)');
@@ -45,45 +58,34 @@ const Profile = () => {
     return null;
   }
 
-  // State
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-
-  // Modal states
-  const [toastVisible, setToastVisible] = useState(false);
-  const [toastType, setToastType] = useState<'success' | 'error'>('success');
-  const [toastMessage, setToastMessage] = useState('');
-
-  const [confirmVisible, setConfirmVisible] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<'removePhoto' | 'logout' | null>(null);
-
-  const userName = currentUser.displayName || 'No Name';
-  const userEmail = currentUser.email || 'No Email';
-  const userPhoto = currentUser.image || null;
-
-  // Toast helper
-  const showToast = (type: 'success' | 'error', message: string) => {
-    setToastType(type);
-    setToastMessage(message);
-    setToastVisible(true);
+  const showModal = (type: 'success' | 'error', message: string) => {
+    setModalType(type);
+    setModalMessage(message);
+    setModalVisible(true);
   };
 
-  // Confirm helper
   const openConfirm = (action: 'removePhoto' | 'logout') => {
     setConfirmAction(action);
     setConfirmVisible(true);
   };
 
-  // Fetch transactions
   useEffect(() => {
-    const transactionsRef = collection(db, 'users', currentUser.uid, 'transactions');
+    const transactionsRef = collection(
+      db,
+      'users',
+      currentUser.uid,
+      'transactions'
+    );
     const unsubscribe = onSnapshot(transactionsRef, (snapshot) => {
       const docs = snapshot.docs.map((docSnap) => {
         const data = docSnap.data();
         return {
           id: docSnap.id,
           type: data.type as 'income' | 'expense',
-          amount: typeof data.amount === 'number' ? data.amount : parseFloat(data.amount) || 0,
+          amount:
+            typeof data.amount === 'number'
+              ? data.amount
+              : parseFloat(data.amount) || 0,
           done: !!data.done,
         };
       });
@@ -93,16 +95,16 @@ const Profile = () => {
     return () => unsubscribe();
   }, [currentUser.uid]);
 
-  // Image Picker
   const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const { status } =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      showToast('error', 'Need permission to access photos!');
+      showModal('error', 'Need permission to access photos!');
       return;
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.5,
@@ -115,14 +117,15 @@ const Profile = () => {
   };
 
   const takePhoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    const { status } =
+      await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      showToast('error', 'Need camera permission!');
+      showModal('error', 'Need camera permission!');
       return;
     }
 
     const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.5,
@@ -141,18 +144,17 @@ const Profile = () => {
     try {
       await updateDoc(userRef, { image: base64Img });
       setUser((prev: any) => ({ ...prev, image: base64Img }));
-      showToast('success', 'Profile picture updated!');
+      showModal('success', 'Profile picture updated!');
     } catch (err) {
-      showToast('error', 'Failed to upload image');
+      showModal('error', 'Failed to upload image');
     }
   };
 
   const handleRemovePhoto = async () => {
     if (!userPhoto) {
-      showToast('error', 'No profile picture to remove!');
+      showModal('error', 'No profile picture to remove!');
       return;
     }
-
     openConfirm('removePhoto');
   };
 
@@ -161,9 +163,9 @@ const Profile = () => {
     try {
       await updateDoc(userRef, { image: null });
       setUser((prev: any) => ({ ...prev, image: null }));
-      showToast('success', 'Profile picture removed');
+      showModal('success', 'Profile picture removed');
     } catch {
-      showToast('error', 'Failed to remove photo');
+      showModal('error', 'Failed to remove photo');
     }
     setConfirmVisible(false);
   };
@@ -182,7 +184,6 @@ const Profile = () => {
     }
   };
 
-  // Calculations
   const totalIncome = transactions
     .filter((t) => t.type === 'income')
     .reduce((sum, t) => sum + t.amount, 0);
@@ -192,14 +193,15 @@ const Profile = () => {
     .reduce((sum, t) => sum + t.amount, 0);
 
   const balance = totalIncome - totalExpense;
-  const doneExpensesCount = transactions.filter((t) => t.type === 'expense' && t.done).length;
+  const doneExpensesCount = transactions.filter(
+    (t) => t.type === 'expense' && t.done
+  ).length;
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f7f7f7" />
 
       <View style={styles.sContainer}>
-        {/* Profile Header */}
         <View style={styles.profileHeader}>
           {userPhoto ? (
             <Image style={styles.profileImage} source={{ uri: userPhoto }} />
@@ -214,12 +216,18 @@ const Profile = () => {
               <Text style={styles.btnText}>Pick Image</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.smallButton, { backgroundColor: '#444' }]} onPress={takePhoto}>
+            <TouchableOpacity
+              style={[styles.smallButton, { backgroundColor: '#444' }]}
+              onPress={takePhoto}
+            >
               <Text style={styles.btnText}>Take Photo</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.smallButton, { backgroundColor: userPhoto ? '#d11a2a' : '#999' }]}
+              style={[
+                styles.smallButton,
+                { backgroundColor: userPhoto ? '#d11a2a' : '#999' },
+              ]}
               onPress={handleRemovePhoto}
               disabled={!userPhoto}
             >
@@ -231,7 +239,6 @@ const Profile = () => {
           <Text style={styles.userEmail}>{userEmail}</Text>
         </View>
 
-        {/* Stats */}
         <View style={styles.statsContainer}>
           <View style={styles.statBox}>
             <Text style={styles.statNumber}>€{balance.toFixed(2)}</Text>
@@ -247,7 +254,6 @@ const Profile = () => {
           </View>
         </View>
 
-        {/* Logout */}
         <TouchableOpacity
           style={[styles.logoutBtn, { opacity: isLoggingOut ? 0.6 : 1 }]}
           onPress={handleLogout}
@@ -259,15 +265,13 @@ const Profile = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Toast Modal */}
       <ConfirmModal
-        visible={toastVisible}
-        type={toastType}
-        message={toastMessage}
-        onClose={() => setToastVisible(false)}
+        visible={modalVisible}
+        type={modalType}
+        message={modalMessage}
+        onClose={() => setModalVisible(false)}
       />
 
-      {/* Confirm Modal (Remove Photo or Logout) */}
       <ConfirmModal
         visible={confirmVisible}
         type="error"
@@ -279,11 +283,8 @@ const Profile = () => {
         onClose={() => setConfirmVisible(false)}
         showConfirm={true}
         onConfirm={() => {
-          if (confirmAction === 'removePhoto') {
-            confirmRemovePhoto();
-          } else if (confirmAction === 'logout') {
-            confirmLogout();
-          }
+          if (confirmAction === 'removePhoto') confirmRemovePhoto();
+          if (confirmAction === 'logout') confirmLogout();
         }}
       />
     </SafeAreaView>
@@ -292,7 +293,6 @@ const Profile = () => {
 
 export default Profile;
 
-// Styles
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f7f7f7' },
   sContainer: { flex: 1, padding: 20, alignItems: 'center' },
