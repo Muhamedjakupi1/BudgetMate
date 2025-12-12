@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { View, Text, ActivityIndicator, StyleSheet, TextInput, TouchableOpacity, ScrollView, Button} from "react-native";
+import { View, Text, ActivityIndicator, StyleSheet, TextInput, TouchableOpacity, ScrollView, Button } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 import StatusModal from "../../components/ui/statusModal";
+import * as Notifications from "expo-notifications";
 
 const FormInput = (props: any) => <TextInput style={styles.input} {...props} />;
 
@@ -71,7 +72,7 @@ export default function TransactionDetail() {
         loadTransaction();
     }, [id, user]);
 
-        const handleUpdate = async () => {
+    const handleUpdate = async () => {
         if (!user || !id || !transaction) return;
 
         const amountValue = parseFloat(newAmount);
@@ -101,8 +102,8 @@ export default function TransactionDetail() {
 
         try {
             const transactionRef = doc(db, "users", user.uid, "transactions", id as string);
-          await updateDoc(transactionRef, updatedData);
-         
+            await updateDoc(transactionRef, updatedData);
+
             setTransaction((prev: any) => ({ ...prev, ...updatedData }));
 
             setModalType("success");
@@ -144,85 +145,85 @@ export default function TransactionDetail() {
 
     return (
         <SafeAreaView style={styles.safeArea}>
-        <ScrollView style={styles.container}>
-            <Text style={styles.title}>Update Expense</Text>
+            <ScrollView style={styles.container}>
+                <Text style={styles.title}>Update Expense</Text>
 
-            <Text style={styles.label}>Amount</Text>
-            <FormInput
-                value={newAmount}
-                onChangeText={setNewAmount}
-                keyboardType="numeric"
-            />
-            <>
-                <Text style={styles.label}>Category</Text>
-                <TouchableOpacity
-                    style={[styles.dropdown, { backgroundColor: newCategory ? categoryColors[newCategory] : '#fff' }]}
-                    onPress={() => setCategoryOpen(!isCategoryOpen)}
-                >
-                    <Text style={{ color: newCategory ? 'white' : '#888', fontWeight: '600' }}>
-                        {newCategory || 'Select Category'}
-                    </Text>
-                </TouchableOpacity>
-                {isCategoryOpen && (
-                    <View style={styles.dropdownList}>
-                        {expenseCategories.map((cat) => (
-                            <TouchableOpacity
-                                key={cat}
-                                style={[styles.dropdownItem, { backgroundColor: categoryColors[cat] || '#ccc' }]}
-                                onPress={() => {
-                                    setNewCategory(cat);
-                                    setCategoryOpen(false);
-                                }}
-                            >
-                                <Text style={{ color: 'white', fontWeight: '600' }}>{cat}</Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                )}
+                <Text style={styles.label}>Amount</Text>
+                <FormInput
+                    value={newAmount}
+                    onChangeText={setNewAmount}
+                    keyboardType="numeric"
+                />
+                <>
+                    <Text style={styles.label}>Category</Text>
+                    <TouchableOpacity
+                        style={[styles.dropdown, { backgroundColor: newCategory ? categoryColors[newCategory] : '#fff' }]}
+                        onPress={() => setCategoryOpen(!isCategoryOpen)}
+                    >
+                        <Text style={{ color: newCategory ? 'white' : '#888', fontWeight: '600' }}>
+                            {newCategory || 'Select Category'}
+                        </Text>
+                    </TouchableOpacity>
+                    {isCategoryOpen && (
+                        <View style={styles.dropdownList}>
+                            {expenseCategories.map((cat) => (
+                                <TouchableOpacity
+                                    key={cat}
+                                    style={[styles.dropdownItem, { backgroundColor: categoryColors[cat] || '#ccc' }]}
+                                    onPress={() => {
+                                        setNewCategory(cat);
+                                        setCategoryOpen(false);
+                                    }}
+                                >
+                                    <Text style={{ color: 'white', fontWeight: '600' }}>{cat}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    )}
 
-                <Text style={styles.label}>Payment Type</Text>
-                <TouchableOpacity style={styles.dropdown} onPress={() => setPaymentOpen(!isPaymentOpen)}>
-                    <Text style={{ color: newPaymentType ? '#000' : '#888', fontWeight: '600' }}>
-                        {newPaymentType || 'Select Payment Type'}
-                    </Text>
-                </TouchableOpacity>
-                {isPaymentOpen && (
-                    <View style={styles.dropdownList}>
-                        {paymentOptions.map((opt) => (
-                            <TouchableOpacity
-                                key={opt}
-                                style={[styles.dropdownItem, { backgroundColor: '#518e59ff' }]}
-                                onPress={() => {
-                                    setNewPaymentType(opt);
-                                    setPaymentOpen(false);
-                                }}
-                            >
-                                <Text style={{ color: 'white', fontWeight: '600' }}>{opt}</Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                )}
+                    <Text style={styles.label}>Payment Type</Text>
+                    <TouchableOpacity style={styles.dropdown} onPress={() => setPaymentOpen(!isPaymentOpen)}>
+                        <Text style={{ color: newPaymentType ? '#000' : '#888', fontWeight: '600' }}>
+                            {newPaymentType || 'Select Payment Type'}
+                        </Text>
+                    </TouchableOpacity>
+                    {isPaymentOpen && (
+                        <View style={styles.dropdownList}>
+                            {paymentOptions.map((opt) => (
+                                <TouchableOpacity
+                                    key={opt}
+                                    style={[styles.dropdownItem, { backgroundColor: '#518e59ff' }]}
+                                    onPress={() => {
+                                        setNewPaymentType(opt);
+                                        setPaymentOpen(false);
+                                    }}
+                                >
+                                    <Text style={{ color: 'white', fontWeight: '600' }}>{opt}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    )}
 
-                <Text style={styles.label}>Note</Text>
-                <FormInput value={newNote} onChangeText={setNewNote} />
-                <Text style={styles.label}>Payee Name</Text>
-                <FormInput value={newPayeeName} onChangeText={setNewPayeeName} />
-            </>
+                    <Text style={styles.label}>Note</Text>
+                    <FormInput value={newNote} onChangeText={setNewNote} />
+                    <Text style={styles.label}>Payee Name</Text>
+                    <FormInput value={newPayeeName} onChangeText={setNewPayeeName} />
+                </>
 
-             <View style={{ marginTop: 20, marginBottom: 40 }}>
-                <Button title="Save Changes" onPress={handleUpdate} color="#518e59ff" />
-            </View>
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <TouchableOpacity onPress={() => router.back()}>
-                    <Text style={styles.text}>Go back</Text>
-                </TouchableOpacity>
-            </View>
-            <StatusModal
-                visible={modalVisible}
-                message={modalMessage}
-                type={modalType}
-            />
-        </ScrollView>
+                <View style={{ marginTop: 20, marginBottom: 40 }}>
+                    <Button title="Save Changes" onPress={handleUpdate} color="#518e59ff" />
+                </View>
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <TouchableOpacity onPress={() => router.back()}>
+                        <Text style={styles.text}>Go back</Text>
+                    </TouchableOpacity>
+                </View>
+                <StatusModal
+                    visible={modalVisible}
+                    message={modalMessage}
+                    type={modalType}
+                />
+            </ScrollView>
         </SafeAreaView>
     );
 }
