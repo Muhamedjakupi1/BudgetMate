@@ -16,6 +16,8 @@ import { router } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import * as ImagePicker from 'expo-image-picker';
 import ConfirmModal from '../../components/ui/ConfirmModal';
+import { Ionicons } from '@expo/vector-icons';
+
 
 type Transaction = {
   id: string;
@@ -104,7 +106,7 @@ const Profile = () => {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.5,
@@ -125,7 +127,7 @@ const Profile = () => {
     }
 
     const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ['images'],
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.5,
@@ -212,28 +214,32 @@ const Profile = () => {
           )}
 
           <View style={styles.buttonRow}>
-            <TouchableOpacity style={styles.smallButton} onPress={pickImage}>
-              <Text style={styles.btnText}>Pick Image</Text>
+            <TouchableOpacity style={styles.actionButton} onPress={pickImage}>
+              <Ionicons name="image-outline" size={18} color="#fff" />
+              <Text style={styles.actionText}>Gallery</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.smallButton, { backgroundColor: '#444' }]}
+              style={[styles.actionButton, { backgroundColor: '#444' }]}
               onPress={takePhoto}
             >
-              <Text style={styles.btnText}>Take Photo</Text>
+              <Ionicons name="camera-outline" size={18} color="#fff" />
+              <Text style={styles.actionText}>Camera</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[
-                styles.smallButton,
+                styles.actionButton,
                 { backgroundColor: userPhoto ? '#d11a2a' : '#999' },
               ]}
               onPress={handleRemovePhoto}
               disabled={!userPhoto}
             >
-              <Text style={styles.btnText}>Remove</Text>
+              <Ionicons name="trash-outline" size={18} color="#fff" />
+              <Text style={styles.actionText}>Remove</Text>
             </TouchableOpacity>
           </View>
+
 
           <Text style={styles.userName}>{userName}</Text>
           <Text style={styles.userEmail}>{userEmail}</Text>
@@ -344,4 +350,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoutText: { color: '#fff', fontWeight: 'bold', fontSize: 17 },
+  actionButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginHorizontal: 5,
+    backgroundColor: '#0066ff',
+  },
+
+  actionText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+
 });
