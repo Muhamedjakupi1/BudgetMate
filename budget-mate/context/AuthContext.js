@@ -1,7 +1,7 @@
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "../firebase";
-import {router} from 'expo-router';
+import { router } from 'expo-router';
 import { doc, getDoc } from "firebase/firestore";
 
 const AuthContext = createContext();
@@ -20,8 +20,11 @@ export const AuthProvider = ({ children }) => {
                 setUser({
                     uid: user.uid,
                     email: user.email,
-                    ...updatedUser
+                    displayName: updatedUser.displayName || user.displayName || '',
+                    image: updatedUser.image || null,
+                    ...updatedUser,
                 });
+
                 setLoading(false);
             } else {
                 setUser(null);
