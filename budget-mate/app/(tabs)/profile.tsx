@@ -1,4 +1,3 @@
-// app/(tabs)/profile.tsx
 import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
@@ -15,7 +14,7 @@ import { onSnapshot, collection, doc, updateDoc } from 'firebase/firestore';
 import { router } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import * as ImagePicker from 'expo-image-picker';
-import ConfirmModal from '../../components/ui/ConfirmModal';
+import ConfirmModal from '../../components/ui/modalWithButtons';
 import { Ionicons } from '@expo/vector-icons';
 
 

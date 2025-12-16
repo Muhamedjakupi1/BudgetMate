@@ -5,8 +5,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../context/AuthContext";
 import { collection, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc } from "firebase/firestore";
 import { db } from "../../firebase";
-import ConfirmModal from '../../components/ui/ConfirmModal';
-import { Transaction, generateRandomTransactions } from "../../components/RandomTransaction";
+import ConfirmModal from '../../components/ui/modalWithButtons';
+import { Transaction, generateRandomTransactions } from "../../components/fakeTransaction";
 import { Ionicons } from '@expo/vector-icons';
 
 export default function HomePage() {
