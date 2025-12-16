@@ -76,9 +76,9 @@ export default function NotificationsScreen() {
   const [notifList, setNotifList] = useState<FirestoreNotif[]>([]);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.uid) return;
 
-    const ref = collection(db, "users", user.id, "notifications");
+    const ref = collection(db, "users", user.uid, "notifications");
 
     const notifsQuery = query(ref, orderBy("createdAt", "desc"));
 
@@ -123,11 +123,11 @@ export default function NotificationsScreen() {
     );
 
     return () => unsubscribe();
-  }, [user?.id]);
+  }, [user?.uid]);
 
   const cancelNotif = useCallback(
     async (notificationId: string) => {
-      if (!user?.id) return;
+      if (!user?.uid) return;
 
       const item = notifList.find(
         (n) => n.expoNotificationId === notificationId || n.id === notificationId
@@ -148,7 +148,7 @@ export default function NotificationsScreen() {
               );
           }
         }
-        await deleteDoc(doc(db, "users", user.id, "notifications", item.id));
+        await deleteDoc(doc(db, "users", user.uid, "notifications", item.id));
       } catch (e) {
         Alert.alert("Error", "Failed to remove notification.");
       }

@@ -2,7 +2,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "../firebase";
 import { router } from 'expo-router';
-import { doc, getDoc } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 
 const AuthContext = createContext();
 
@@ -11,29 +11,60 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                const userRef = doc(db, "users", user.uid);
-                const data = await getDoc(userRef);
-                const updatedUser = data.exists() ? data.data() : {};
+        let unsubUserDoc = null;
 
-                setUser({
-                    uid: user.uid,
-                    email: user.email,
-                    displayName: updatedUser.displayName || user.displayName || '',
-                    image: updatedUser.image || null,
-                    ...updatedUser,
-                });
+        const unsubscribeAuth = onAuthStateChanged(auth, (fbUser) => {
+            if (unsubUserDoc) {
+                unsubUserDoc();
+                unsubUserDoc = null;
+            }
 
-                setLoading(false);
-            } else {
+            if (!fbUser) {
                 setUser(null);
                 setLoading(false);
-                router.replace('/(auth)/signin');
+                router.replace("/(auth)/signin");
+                return;
             }
+
+            const userRef = doc(db, "users", fbUser.uid);
+
+            unsubUserDoc = onSnapshot(
+                userRef,
+                (snap) => {
+                    const updatedUser = snap.exists() ? snap.data() : {};
+
+                    setUser({
+                        uid: fbUser.uid,
+                        email: fbUser.email,
+                        displayName:
+                            updatedUser.displayName || fbUser.displayName || "",
+                        image: updatedUser.image || null,
+                        ...updatedUser,
+                    });
+
+                    setLoading(false);
+                },
+                (err) => {
+                    console.error("User doc listener error:", err);
+
+                    setUser({
+                        uid: fbUser.uid,
+                        email: fbUser.email,
+                        displayName: fbUser.displayName || "",
+                        image: null,
+                    });
+
+                    setLoading(false);
+                }
+            );
         });
-        return () => unsubscribe();
-    }, [])
+
+        return () => {
+            if (unsubUserDoc) unsubUserDoc();
+            unsubscribeAuth();
+        };
+    }, []);
+
 
     const logout = async () => {
         try {

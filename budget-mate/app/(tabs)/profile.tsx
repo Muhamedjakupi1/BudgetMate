@@ -10,12 +10,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { db } from '../../firebase';
-import { onSnapshot, collection, doc, updateDoc } from 'firebase/firestore';
+import { onSnapshot, collection, doc, updateDoc, addDoc, serverTimestamp, getDocs, where, limit, deleteDoc, query } from 'firebase/firestore';
 import { router } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import * as ImagePicker from 'expo-image-picker';
 import ConfirmModal from '../../components/ui/modalWithButtons';
 import { Ionicons } from '@expo/vector-icons';
+
 
 
 type Transaction = {
@@ -65,10 +66,43 @@ const Profile = () => {
     setModalVisible(true);
   };
 
+  const createProfileSetupNotifIfMissing = async () => {
+    const notifsRef = collection(db, "users", currentUser.uid, "notifications");
+
+    const dedupeKey = "profile_setup:no_photo";
+    const existing = await getDocs(
+      query(notifsRef, where("dedupeKey", "==", dedupeKey), limit(1))
+    );
+    if (!existing.empty) return;
+
+    await addDoc(notifsRef, {
+      type: "profile_setup",
+      channel: "in_app",
+      title: "Add a profile photo",
+      body: "Upload a profile picture to personalize your account.",
+      dedupeKey,
+      createdAt: serverTimestamp(),
+      scheduledAt: serverTimestamp(),
+      read: false,
+      status: "active",
+    });
+  };
+
+
   const openConfirm = (action: 'removePhoto' | 'logout') => {
     setConfirmAction(action);
     setConfirmVisible(true);
   };
+
+  useEffect(() => {
+    if (!currentUser?.uid) return;
+
+    const hasPhoto = !!currentUser.image;
+    if (!hasPhoto) {
+      createProfileSetupNotifIfMissing();
+    }
+  }, [currentUser?.uid, currentUser?.image]);
+
 
   useEffect(() => {
     const transactionsRef = collection(
@@ -149,6 +183,15 @@ const Profile = () => {
     } catch (err) {
       showModal('error', 'Failed to upload image');
     }
+
+    const notifsRef = collection(db, "users", currentUser.uid, "notifications");
+    const snap = await getDocs(
+      query(notifsRef, where("dedupeKey", "==", "profile_setup:no_photo"), limit(1))
+    );
+
+if (!snap.empty) {
+  await deleteDoc(doc(db, "users", currentUser.uid, "notifications", snap.docs[0].id));
+}
   };
 
   const handleRemovePhoto = async () => {

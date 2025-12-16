@@ -233,7 +233,7 @@ export default function HomePage() {
         setModalVisible(false);
         setModalAction(null);
 
-        setStatusMessage("⚠️ Not enough budget to complete this expense!");
+        setStatusMessage("Not enough budget to complete this expense!");
         setStatusModalVisible(true);
 
         return;

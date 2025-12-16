@@ -3,11 +3,12 @@ import { View, Text, ScrollView, TouchableOpacity, Pressable, StyleSheet, Status
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FormInput from '../../components/ui/textinput';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { doc, getDoc, addDoc, collection, updateDoc, getDocs, Timestamp } from "firebase/firestore";
+import { doc, getDoc, addDoc, collection, updateDoc, getDocs, Timestamp, serverTimestamp} from "firebase/firestore";
 import { db } from "../../firebase";
 import { useAuth } from '../../context/AuthContext';
 import StatusModal from '../../components/ui/statusModal';
 import { useRouter } from 'expo-router';
+import * as Notifications from "expo-notifications";
 
 const categoryColors: Record<string, string> = {
   Transport: '#E53935',
@@ -59,124 +60,179 @@ const AddTransaction: React.FC = () => {
 
 
   const handleSave = async () => {
-    const numAmount = parseFloat(amount);
+  const numAmount = parseFloat(amount);
 
-    if (isNaN(numAmount) || numAmount <= 0) {
+  if (isNaN(numAmount) || numAmount <= 0) {
+    setStatusType("error");
+    setSuccessMessage("Enter a valid amount!");
+    setSuccessModalVisible(true);
+    setTimeout(() => setSuccessModalVisible(false), 1500);
+    return;
+  }
+
+  if (!user) {
+    setStatusType("error");
+    setSuccessMessage("User not logged in!");
+    setSuccessModalVisible(true);
+    setTimeout(() => setSuccessModalVisible(false), 1500);
+    return;
+  }
+
+  if (type === "expense" && !category) {
+    setStatusType("error");
+    setSuccessMessage("Please select a category!");
+    setSuccessModalVisible(true);
+    setTimeout(() => setSuccessModalVisible(false), 1500);
+    return;
+  }
+
+  if (type === "expense" && !dueDate) {
+    setStatusType("error");
+    setSuccessMessage("Please select a due date!");
+    setSuccessModalVisible(true);
+    setTimeout(() => setSuccessModalVisible(false), 1500);
+    return;
+  }
+
+  const userRef = doc(db, "users", user.uid);
+
+  let overallBefore = 0;
+
+  try {
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) {
       setStatusType("error");
-      setSuccessMessage("Enter a valid amount!");
+      setSuccessMessage("User data not found!");
       setSuccessModalVisible(true);
       setTimeout(() => setSuccessModalVisible(false), 1500);
       return;
     }
 
-    if (!user) {
-      setStatusType("error");
-      setSuccessMessage("User not logged in!");
-      setSuccessModalVisible(true);
-      setTimeout(() => setSuccessModalVisible(false), 1500);
-      return;
+    overallBefore = userSnap.data()?.overallBudget ?? 0;
+
+    const transactionData: any = {
+      type,
+      amount: numAmount,
+      date: serverTimestamp(),
+      category: type === "expense" ? category : null,
+      note: type === "expense" ? note : null,
+      paymentType: type === "expense" ? paymentType : null,
+      payeeName: type === "expense" ? payeeName : null,
+      done: false,
+      ...(type === "expense" && dueDate ? { dueDate: Timestamp.fromDate(dueDate) } : {}),
+    };
+
+    await addDoc(collection(db, "users", user.uid, "transactions"), transactionData);
+
+    if (type === "income") {
+      await updateDoc(userRef, { overallBudget: overallBefore + numAmount });
     }
 
-    if (type === 'expense' && (!category)) {
-      setStatusType("error");
-      setSuccessMessage("Please fill in all required fields for expense!");
-      setSuccessModalVisible(true);
-      setTimeout(() => setSuccessModalVisible(false), 1500);
-      return;
+    setAmount("");
+    setCategory("");
+    setNote("");
+    setPaymentType("");
+    setPayeeName("");
+    setCategoryOpen(false);
+    setPaymentOpen(false);
+    setDueDate(null);
+    setShowDuePicker(false);
+
+    setStatusType("success");
+    setSuccessMessage(type === "expense" ? "Expense saved!" : "Income saved!");
+    setSuccessModalVisible(true);
+
+    setTimeout(() => {
+      setSuccessModalVisible(false);
+      router.push("/(tabs)");
+    }, 900);
+  } catch (error) {
+    console.error("Transaction save failed:", error);
+    setStatusType("error");
+    setSuccessMessage("Could not save transaction. Please try again.");
+    setSuccessModalVisible(true);
+    setTimeout(() => setSuccessModalVisible(false), 900);
+    return;
+  }
+
+  try {
+    if (type === "expense") {
+      const LOW_THRESHOLD = 10;
+      const remaining = overallBefore; 
+
+      if (remaining <= LOW_THRESHOLD) {
+        await addDoc(collection(db, "users", user.uid, "notifications"), {
+          type: "low_budget",
+          channel: "in_app",
+          title: "Low budget warning",
+          body: `Your remaining budget is €${remaining.toFixed(2)}.`,
+          createdAt: serverTimestamp(),
+          scheduledAt: serverTimestamp(), 
+          read: false,
+          status: "active",
+          meta: { remaining, threshold: LOW_THRESHOLD },
+        });
+      }
+
+      const missing: string[] = [];
+      if (!note.trim()) missing.push("note");
+      if (!payeeName.trim()) missing.push("payee name");
+      if (!paymentType) missing.push("payment type");
+
+      if (missing.length > 0) {
+        await addDoc(collection(db, "users", user.uid, "notifications"), {
+          type: "follow_up",
+          channel: "in_app",
+          title: "Complete your expense details",
+          body: `Please add: ${missing.join(", ")}.`,
+          createdAt: serverTimestamp(),
+          scheduledAt: serverTimestamp(),
+          read: false,
+          status: "active",
+          meta: { missing },
+        });
+      }
+
+      if (dueDate) {
+        const twoHoursBefore = new Date(dueDate.getTime() - 2 * 60 * 60 * 1000);
+        const scheduledAt =
+          twoHoursBefore.getTime() > Date.now()
+            ? twoHoursBefore
+            : new Date(Date.now() + 5 * 60 * 1000);
+
+        const secondsUntil = Math.max(
+          5,
+          Math.floor((scheduledAt.getTime() - Date.now()) / 1000)
+        );
+
+        const expoId = await Notifications.scheduleNotificationAsync({
+          content: {
+            title: "Bill reminder",
+            body: `${category} bill is due on ${dueDate.toDateString()}.`,
+            sound: true,
+            data: { category, amount: numAmount },
+          },
+          trigger: { seconds: secondsUntil, repeats: false } as any,
+        });
+
+        await addDoc(collection(db, "users", user.uid, "notifications"), {
+          type: "bill_reminder",
+          channel: "push",
+          title: "Bill reminder",
+          body: `${category} bill is due on ${dueDate.toDateString()}.`,
+          createdAt: serverTimestamp(),
+          scheduledAt: Timestamp.fromDate(scheduledAt),
+          expoNotificationId: expoId,
+          read: false,
+          status: "active",
+          meta: { dueDate: dueDate.toISOString(), category, amount: numAmount },
+        });
+      }
     }
-
-    if (type === 'expense' && !dueDate) {
-      setStatusType("error");
-      setSuccessMessage("Please select a due date!");
-      setSuccessModalVisible(true);
-      setTimeout(() => setSuccessModalVisible(false), 1500);
-      return;
-    }
-
-
-    try {
-      const userRef = doc(db, 'users', user.uid);
-      const userSnap = await getDoc(userRef);
-
-      if (!userSnap.exists()) {
-        setStatusType("error");
-        setSuccessMessage("User data not found!");
-        setSuccessModalVisible(true);
-        setTimeout(() => setSuccessModalVisible(false), 1500);
-        return;
-      }
-
-      const transactionsSnap = await getDocs(collection(db, 'users', user.uid, 'transactions'));
-      let totalIncome = 0;
-      let totalExpense = 0;
-
-      transactionsSnap.forEach((doc) => {
-        const t = doc.data();
-        if (t.type === 'income') totalIncome += t.amount;
-        if (t.type === 'expense' && t.done) totalExpense += t.amount;
-      });
-
-      const currentBudget = totalIncome - totalExpense;
-
-      if (type === 'expense' && numAmount > currentBudget) {
-        setStatusType("error");
-        setSuccessMessage(`⚠️ Not enough budget! You have ${currentBudget} left.`);
-        setSuccessModalVisible(true);
-        setTimeout(() => setSuccessModalVisible(false), 900);
-        return;
-      }
-
-      const transactionData: any = {
-        type,
-        amount: numAmount,
-        date: new Date(),
-        category: type === 'expense' ? category : null,
-        note: type === 'expense' ? note : null,
-        paymentType: type === 'expense' ? paymentType : null,
-        payeeName: type === 'expense' ? payeeName : null,
-        done: false
-      };
-      
-      if (type === 'expense' && dueDate) {
-        transactionData.dueDate = Timestamp.fromDate(dueDate);
-      }
-
-      await addDoc(collection(db, 'users', user.uid, 'transactions'), transactionData);
-
-      let newOverallBudget = currentBudget;
-      if (type === 'income') {
-        newOverallBudget = currentBudget + numAmount;
-      }
-
-      await updateDoc(userRef, { overallBudget: newOverallBudget });
-
-      setAmount('');
-      setCategory('');
-      setNote('');
-      setPaymentType('');
-      setPayeeName('');
-      setCategoryOpen(false);
-      setPaymentOpen(false);
-      setDueDate(null);
-      setShowDuePicker(false);
-
-
-      setStatusType("success");
-      setSuccessMessage(type === 'expense' ? "Expense has been saved successfully!" : "Income has been saved successfully!");
-      setSuccessModalVisible(true);
-      setTimeout(() => {
-        setSuccessModalVisible(false);
-        router.push('/(tabs)');
-      }, 900);
-
-    } catch (error) {
-      console.error('Error saving transaction:', error);
-      setStatusType("error");
-      setSuccessMessage("Couldn't save transaction. Check budget and try again.");
-      setSuccessModalVisible(true);
-      setTimeout(() => setSuccessModalVisible(false), 900);
-    }
-  };
+  } catch (e) {
+    console.warn("Notifications failed (transaction saved):", e);
+  }
+};
 
   return (
     <SafeAreaView style={styles.safeArea}>

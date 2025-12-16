@@ -2,15 +2,44 @@ import React, {  useState, useCallback } from "react";
 import { View, Text, FlatList, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "expo-router";
-import { collection, query, onSnapshot } from "firebase/firestore";
+import { collection, query, onSnapshot,serverTimestamp, getDocs, where, limit, addDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 import { Ionicons } from '@expo/vector-icons';
+
 
 export default function ExpensesHistory() {
   const { user } = useAuth();
   const [expenses, setExpenses] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
+
+  const createWeeklySummaryIfMissing = async (totalAmount: number) => {
+    if (!user) return;
+
+    const startOfWeek = new Date();
+    startOfWeek.setDate(startOfWeek.getDate() - 7);
+
+    const dedupeKey = `summary:week:${startOfWeek.toISOString().slice(0, 10)}`;
+
+    const notifsRef = collection(db, "users", user.uid, "notifications");
+    const existing = await getDocs(
+      query(notifsRef, where("dedupeKey", "==", dedupeKey), limit(1))
+    );
+
+    if (!existing.empty) return;
+
+    await addDoc(notifsRef, {
+      type: "summary",
+      channel: "in_app",
+      title: "Weekly spending summary",
+      body: `You spent €${totalAmount.toFixed(2)} in the last 7 days.`,
+      dedupeKey,
+      createdAt: serverTimestamp(),
+      read: false,
+      status: "active",
+      meta: { totalAmount },
+    });
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -31,6 +60,7 @@ export default function ExpensesHistory() {
 
         setExpenses(expenseData.sort((a, b) => (b.date?.seconds ?? 0) - (a.date?.seconds ?? 0)));
         setTotal(totalAmount);
+        createWeeklySummaryIfMissing(totalAmount);
       });
 
       return () => unsubscribe();
