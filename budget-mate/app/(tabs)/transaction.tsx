@@ -288,16 +288,18 @@ const AddTransaction: React.FC = () => {
                   </TouchableOpacity>
 
                   {showDuePicker && (
+                    <View style={styles.iosPickerContainer}>
                     <DateTimePicker
                       value={dueDate ?? new Date()}
                       mode="date"
-                      display="default"
+                      display="spinner"
                       onChange={(event, selectedDate) => {
                         setShowDuePicker(false);
                         if ((event as any)?.type === 'dismissed') return;
                         if (selectedDate) setDueDate(selectedDate);
                       }}
                     />
+                    </View>
                   )}
                 </>
               )}
@@ -424,6 +426,16 @@ webDateInput: {
   appearance: 'none',
   WebkitAppearance: 'none',
 },
+iosPickerContainer: {
+  marginTop: 8,
+  backgroundColor: '#888',
+  borderRadius: 12,
+  paddingVertical: 8,
+  paddingHorizontal: 6,
+  borderWidth: 1,
+  borderColor: '#ddd',
+},
+
 
 
 });

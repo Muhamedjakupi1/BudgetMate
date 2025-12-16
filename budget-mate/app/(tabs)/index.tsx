@@ -3,11 +3,62 @@ import { FlatList, StatusBar, StyleSheet, Text, TouchableOpacity, View, Activity
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../context/AuthContext";
-import { collection, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc } from "firebase/firestore";
+import { collection, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc, addDoc, serverTimestamp, Timestamp, getDocs, where, limit,} from "firebase/firestore";
 import { db } from "../../firebase";
 import ConfirmModal from '../../components/ui/modalWithButtons';
 import { Transaction, generateRandomTransactions } from "../../components/fakeTransaction";
 import { Ionicons } from '@expo/vector-icons';
+import * as Notifications from "expo-notifications";
+
+type NotifType = "bill_reminder" | "summary" | "low_budget" | "unusual_spending";
+type NotifChannel = "push" | "in_app";
+
+async function createNotificationIfNotExists(params: {
+  uid: string;
+  type: NotifType;
+  channel: NotifChannel;
+  title: string;
+  body: string;
+  dedupeKey: string;
+  scheduledAt?: Date;
+  expoNotificationId?: string;
+  meta?: Record<string, any>;
+}) {
+  const { uid, type, channel, title, body, dedupeKey, scheduledAt, expoNotificationId, meta } =
+    params;
+
+  const notifRef = collection(db, "users", uid, "notifications");
+
+  const existing = await getDocs(query(notifRef, where("dedupeKey", "==", dedupeKey), limit(1)));
+  if (!existing.empty) return;
+
+  await addDoc(notifRef, {
+    type,
+    channel,
+    title,
+    body,
+    dedupeKey,
+    createdAt: serverTimestamp(),
+    read: false,
+    status: "active",
+    ...(scheduledAt ? { scheduledAt: Timestamp.fromDate(scheduledAt) } : {}),
+    ...(expoNotificationId ? { expoNotificationId } : {}),
+    ...(meta ? { meta } : {}),
+  });
+}
+
+function startOfDay(d: Date) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function weekKey(d: Date) {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return `${date.getUTCFullYear()}-W${weekNo}`;
+}
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -25,7 +76,7 @@ export default function HomePage() {
     if (!user) return;
 
     const q = query(collection(db, "users", user.uid, "transactions"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
       const trans: Transaction[] = [];
       let totalBalance = 0;
 
@@ -49,6 +100,86 @@ export default function HomePage() {
       });
       setFirebaseTransactions(trans);
       setBalance(totalBalance);
+
+      const now = new Date();
+
+      const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      const dueSoon = trans.filter(
+        (t) =>
+          t.type === "expense" &&
+          !t.done &&
+          !!t.dueDate &&
+          new Date(t.dueDate as any) <= in24h
+      );
+
+      if (dueSoon.length > 0) {
+        const soonest = dueSoon
+          .slice()
+          .sort((a, b) => new Date(a.dueDate as any).getTime() - new Date(b.dueDate as any).getTime())[0];
+
+        const dueDate = new Date(soonest.dueDate as any);
+
+        const twoHoursBefore = new Date(dueDate.getTime() - 2 * 60 * 60 * 1000);
+        const scheduledAt = twoHoursBefore.getTime() > now.getTime()
+          ? twoHoursBefore
+          : new Date(now.getTime() + 5 * 60 * 1000);
+
+        const dedupeKey = `bill_reminder:${startOfDay(dueDate).toISOString()}`;
+
+        const expoId = await Notifications.scheduleNotificationAsync({
+          content: {
+            title: "Bill reminder",
+            body: `You have ${dueSoon.length} bill(s) due soon.`,
+            sound: true,
+          },
+          trigger: { seconds: Math.max(5, Math.floor((scheduledAt.getTime() - Date.now()) / 1000)), repeats: false } as any,
+    });
+
+    await createNotificationIfNotExists({
+          uid: user.uid,
+          type: "bill_reminder",
+          channel: "push",
+          title: "Bill reminder",
+          body: `You have ${dueSoon.length} bill(s) due soon.`,
+          dedupeKey,
+          scheduledAt,
+          expoNotificationId: expoId,
+          meta: { count: dueSoon.length, soonestDue: dueDate.toISOString() },
+        });
+      }
+
+      const dayKey = startOfDay(now).toISOString();
+      const spentToday = trans
+        .filter((t) => t.type === "expense" && t.done && t.date && new Date(t.date as any) >= startOfDay(now))
+        .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+      await createNotificationIfNotExists({
+        uid: user.uid,
+        type: "summary",
+        channel: "in_app",
+        title: "Daily summary",
+        body: `Today you spent €${spentToday.toFixed(2)}.`,
+        dedupeKey: `summary:day:${dayKey}`,
+        meta: { spentToday },
+      });
+      
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const spent7d = trans
+        .filter((t) => t.type === "expense" && t.done && t.date && new Date(t.date as any) >= sevenDaysAgo)
+        .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+      const UNUSUAL_THRESHOLD = 200; 
+      if (spent7d > UNUSUAL_THRESHOLD) {
+        await createNotificationIfNotExists({
+          uid: user.uid,
+          type: "unusual_spending",
+          channel: "in_app",
+          title: "Unusual spending detected",
+          body: `You spent €${spent7d.toFixed(2)} in the last 7 days.`,
+          dedupeKey: `unusual_spending:${weekKey(now)}`,
+          meta: { spent7d, threshold: UNUSUAL_THRESHOLD },
+        });
+      }
     });
 
     return () => unsubscribe();
@@ -112,6 +243,19 @@ export default function HomePage() {
 
       const newOverallBudget = currentOverallBudget - txn.amount;
       await updateDoc(userRef, { overallBudget: newOverallBudget });
+
+      const LOW_THRESHOLD = 10;
+      if (newOverallBudget <= LOW_THRESHOLD) {
+        await createNotificationIfNotExists({
+          uid: user.uid,
+          type: "low_budget",
+          channel: "in_app",
+          title: "Low budget warning",
+          body: `Your remaining budget is €${newOverallBudget.toFixed(2)}.`,
+          dedupeKey: `low_budget:${startOfDay(new Date()).toISOString()}:${LOW_THRESHOLD}`,
+          meta: { remaining: newOverallBudget, threshold: LOW_THRESHOLD },
+        });
+      }
 
     } catch (err) {
       console.error(err);

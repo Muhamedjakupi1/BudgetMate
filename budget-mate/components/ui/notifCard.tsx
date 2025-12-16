@@ -1,5 +1,6 @@
 import React, { memo } from "react";
 import { Text, TouchableOpacity, View, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 type NotificationItem = {
   taskTitle: string;
@@ -16,7 +17,7 @@ type NotifCardProps = {
 const NotifCard = memo(({ item, cancel }: NotifCardProps) => {
   return (
     <View style={styles.card}>
-      {/* Header */}
+
       <View style={styles.header}>
         <Text style={styles.taskTitle}>{item.taskTitle}</Text>
 
@@ -25,14 +26,15 @@ const NotifCard = memo(({ item, cancel }: NotifCardProps) => {
         </View>
       </View>
 
-      {/* Body */}
       <Text style={styles.bodyText}>{item.body}</Text>
 
-      {/* Footer */}
       <View style={styles.footer}>
-        <Text style={styles.time}>
-          ⏰ {item.scheduledAt?.toLocaleString()}
-        </Text>
+              <View style={styles.timeRow}>
+                  <Ionicons name="time-outline" size={14} />
+                  <Text style={styles.time}>
+                      {item.scheduledAt ? item.scheduledAt.toLocaleString() : ""}
+                  </Text>
+              </View>
 
         <TouchableOpacity
           activeOpacity={0.7}
@@ -60,13 +62,11 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
-
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-
   taskTitle: {
     fontSize: 16,
     fontWeight: "700",
@@ -74,46 +74,43 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 10,
   },
-
   tag: {
     backgroundColor: "#e8f2ff",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
   },
-
   tagText: {
     fontSize: 12,
     fontWeight: "600",
     color: "#1c6ed5",
   },
-
   bodyText: {
     marginTop: 10,
     fontSize: 14,
     lineHeight: 20,
     color: "#4a4a4a",
   },
-
   footer: {
     marginTop: 14,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-
+  timeRow: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    gap: 6 },
   time: {
     fontSize: 12,
     color: "#7a7a7a",
   },
-
   cancelBtn: {
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 8,
     backgroundColor: "#f2f2f2",
   },
-
   cancelText: {
     fontSize: 13,
     fontWeight: "600",

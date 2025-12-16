@@ -31,6 +31,7 @@ export default function TabLayout() {
             else if (route.name === 'transaction') iconName = focused ? 'swap-horizontal' : 'swap-horizontal-outline';
             else if (route.name === 'expensesHistory') iconName = focused ? 'pie-chart' : 'pie-chart-outline';
             else if (route.name === 'profile') iconName = focused ? 'person' : 'person-outline';
+            else if (route.name === 'notifications')iconName = focused ? 'notifications': 'notifications-outline';
 
             return <Ionicons name={iconName} size={24} color={color} />;
           },
@@ -39,7 +40,9 @@ export default function TabLayout() {
         <Tabs.Screen name="index" options={{ title: 'Home' }} />
         <Tabs.Screen name="transaction" options={{ title: 'Transaction' }} />
         <Tabs.Screen name="expensesHistory" options={{ title: 'Expenses' }} />
+        <Tabs.Screen name="notifications" options={{ title: 'Notifications' }} />
         <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+        
       </Tabs>
   );
 }

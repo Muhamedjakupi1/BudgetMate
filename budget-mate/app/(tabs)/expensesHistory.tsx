@@ -29,7 +29,7 @@ export default function ExpensesHistory() {
           }
         });
 
-        setExpenses(expenseData.sort((a, b) => b.id.localeCompare(a.id)));
+        setExpenses(expenseData.sort((a, b) => (b.date?.seconds ?? 0) - (a.date?.seconds ?? 0)));
         setTotal(totalAmount);
       });
 
@@ -55,7 +55,10 @@ export default function ExpensesHistory() {
                 <View style={styles.expenseItem}>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.expenseTitle}>{item.category}</Text>
-                    <Text>{new Date(item.date.seconds * 1000).toLocaleDateString()}</Text>
+                    <Text>{item.date?.toDate?.().toLocaleDateString() ?? ''}</Text>
+                    {item.dueDate && (
+                      <Text>Due: {item.dueDate?.toDate?.().toLocaleDateString()}</Text>
+                    )}
                     <Text>{item.note}</Text>
                   </View>
                   <View style={styles.rightColumn}>
