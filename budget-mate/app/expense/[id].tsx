@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { View, Text, ActivityIndicator, StyleSheet, TextInput, TouchableOpacity, ScrollView, Button } from "react-native";
+import { View, Text, ActivityIndicator, StyleSheet, TextInput, TouchableOpacity, ScrollView, Button, Platform } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, onSnapshot, Timestamp } from "firebase/firestore";
 import { db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 import StatusModal from "../../components/ui/statusModal";
-import * as Notifications from "expo-notifications";
+import DateTimePicker from '@react-native-community/datetimepicker';
+
 
 const FormInput = (props: any) => <TextInput style={styles.input} {...props} />;
 
@@ -43,6 +44,10 @@ export default function TransactionDetail() {
     const [modalVisible, setModalVisible] = useState(false);
     const [modalType, setModalType] = useState<'success' | 'error'>('success');
     const [modalMessage, setModalMessage] = useState('');
+    const [dueDate, setDueDate] = useState<Date | null>(null);
+    const [showDuePicker, setShowDuePicker] = useState(false);
+
+    
 
     useEffect(() => {
         const loadTransaction = async () => {
@@ -62,6 +67,7 @@ export default function TransactionDetail() {
                     setNewNote(data.note || '');
                     setNewPaymentType(data.paymentType || '');
                     setNewPayeeName(data.payeeName || '');
+                    setDueDate(data.dueDate ? data.dueDate.toDate() : null);
                 }
             } catch (e) {
                 console.error("Error:", e);
@@ -97,6 +103,7 @@ export default function TransactionDetail() {
             note: transactionType === 'expense' ? newNote.trim() : null,
             paymentType: transactionType === 'expense' ? newPaymentType : null,
             payeeName: transactionType === 'expense' ? newPayeeName : null,
+            dueDate: dueDate ? Timestamp.fromDate(dueDate) : null,
             updatedAt: new Date(),
         };
 
@@ -204,6 +211,47 @@ export default function TransactionDetail() {
                         </View>
                     )}
 
+                    <Text style={styles.label}>Due date</Text>
+
+                    {Platform.OS === 'web' ? (
+                        <View style={styles.webDateWrapper}>
+                            <input
+                                type="date"
+                                value={dueDate ? dueDate.toISOString().slice(0, 10) : ''}
+                                onChange={(e) => {
+                                    const v = e.target.value;
+                                    if (!v) return setDueDate(null);
+                                    const [y, m, d] = v.split('-').map(Number);
+                                    setDueDate(new Date(y, m - 1, d));
+                                }}
+                                style={styles.webDateInput as any}
+                            />
+                            
+                        </View>
+                    ) : (
+                        <>
+                            <TouchableOpacity style={styles.dropdown} onPress={() => setShowDuePicker(true)}>
+                                <Text style={{ color: dueDate ? '#000' : '#888', fontWeight: '600' }}>
+                                    {dueDate ? dueDate.toDateString() : 'Select due date'}
+                                </Text>
+                            </TouchableOpacity>
+
+                            {showDuePicker && (
+                                <DateTimePicker
+                                    value={dueDate ?? new Date()}
+                                    mode="date"
+                                    display="default"
+                                    onChange={(event, selectedDate) => {
+                                        setShowDuePicker(false);
+                                        if ((event as any)?.type === 'dismissed') return;
+                                        if (selectedDate) setDueDate(selectedDate);
+                                    }}
+                                />
+                            )}
+                        </>
+                    )}
+
+
                     <Text style={styles.label}>Note</Text>
                     <FormInput value={newNote} onChangeText={setNewNote} />
                     <Text style={styles.label}>Payee Name</Text>
@@ -292,6 +340,31 @@ const styles = StyleSheet.create({
     text: {
         color: '#0000FF',
 
-    }
+    },
+    webDateWrapper: { position: 'relative', width: '100%' },
+    webDateIconRight: {
+        position: 'absolute',
+        right: 12,
+        top: '50%',
+        transform: [{ translateY: -10 }],
+    },
+    webDateInput: {
+        width: '100%',
+        height: 48,
+        paddingLeft: 14,
+        paddingRight: 42,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        fontSize: 16,
+        backgroundColor: '#fff',
+        // @ts-ignore
+        boxSizing: 'border-box',
+        // @ts-ignore
+        appearance: 'none',
+        // @ts-ignore
+        WebkitAppearance: 'none',
+    },
+
 });
 

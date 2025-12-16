@@ -41,6 +41,7 @@ export default function HomePage() {
           paymentType: data.paymentType,
           payeeName: data.payeeName,
           date: data.date,
+          dueDate: data.dueDate,
           isExternalApi: false,
         });
         if (data.type === "income") totalBalance += data.amount;

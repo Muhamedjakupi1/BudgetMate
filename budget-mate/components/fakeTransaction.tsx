@@ -1,4 +1,5 @@
 import { nanoid } from "nanoid";
+import{ Timestamp } from "firebase/firestore";
 // Tipi Transaction 
 export interface Transaction {
   id: string;
@@ -10,6 +11,7 @@ export interface Transaction {
   paymentType?: string;
   payeeName?: string;
   date?: string;
+  dueDate?: Timestamp | null;
   isExternalApi?: boolean; 
 }
 // URL e API te jashtme

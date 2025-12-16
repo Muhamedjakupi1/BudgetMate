@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Pressable, StyleSheet, StatusBar } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Pressable, StyleSheet, StatusBar, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FormInput from '../../components/ui/textinput';
-import { doc, getDoc, addDoc, collection, updateDoc, getDocs } from "firebase/firestore";
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { doc, getDoc, addDoc, collection, updateDoc, getDocs, Timestamp } from "firebase/firestore";
 import { db } from "../../firebase";
 import { useAuth } from '../../context/AuthContext';
 import StatusModal from '../../components/ui/statusModal';
@@ -40,6 +41,22 @@ const AddTransaction: React.FC = () => {
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [statusType, setStatusType] = useState<"success" | "error">("success");
+  const [dueDate, setDueDate] = useState<Date | null>(null);
+  const [showDuePicker, setShowDuePicker] = useState(false);
+
+  const switchType = (next: 'income' | 'expense') => {
+    setType(next);
+    setCategory('');
+    setPaymentType('');
+    setNote('');
+    setPayeeName('');
+    setCategoryOpen(false);
+    setPaymentOpen(false);
+    setShowDuePicker(false);
+    setDueDate(null);
+    setAmount('');
+  };
+
 
   const handleSave = async () => {
     const numAmount = parseFloat(amount);
@@ -67,6 +84,15 @@ const AddTransaction: React.FC = () => {
       setTimeout(() => setSuccessModalVisible(false), 1500);
       return;
     }
+
+    if (type === 'expense' && !dueDate) {
+      setStatusType("error");
+      setSuccessMessage("Please select a due date!");
+      setSuccessModalVisible(true);
+      setTimeout(() => setSuccessModalVisible(false), 1500);
+      return;
+    }
+
 
     try {
       const userRef = doc(db, 'users', user.uid);
@@ -100,7 +126,7 @@ const AddTransaction: React.FC = () => {
         return;
       }
 
-      const transactionData = {
+      const transactionData: any = {
         type,
         amount: numAmount,
         date: new Date(),
@@ -110,6 +136,10 @@ const AddTransaction: React.FC = () => {
         payeeName: type === 'expense' ? payeeName : null,
         done: false
       };
+      
+      if (type === 'expense' && dueDate) {
+        transactionData.dueDate = Timestamp.fromDate(dueDate);
+      }
 
       await addDoc(collection(db, 'users', user.uid, 'transactions'), transactionData);
 
@@ -127,6 +157,9 @@ const AddTransaction: React.FC = () => {
       setPayeeName('');
       setCategoryOpen(false);
       setPaymentOpen(false);
+      setDueDate(null);
+      setShowDuePicker(false);
+
 
       setStatusType("success");
       setSuccessMessage(type === 'expense' ? "Expense has been saved successfully!" : "Income has been saved successfully!");
@@ -153,13 +186,13 @@ const AddTransaction: React.FC = () => {
         <View style={styles.navbar}>
           <TouchableOpacity
             style={[styles.navItem, type === 'expense' && styles.activeNav]}
-            onPress={() => setType('expense')}
+            onPress={() => switchType('expense')}
           >
             <Text style={styles.navText}>Expense</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.navItem, type === 'income' && styles.activeNav]}
-            onPress={() => setType('income')}
+            onPress={() => switchType('income')}
           >
             <Text style={styles.navText}>Income</Text>
           </TouchableOpacity>
@@ -222,9 +255,53 @@ const AddTransaction: React.FC = () => {
                     >
                       <Text style={{ color: 'white', fontWeight: '600' }}>{opt}</Text>
                     </TouchableOpacity>
+              
                   ))}
                 </View>
               )}
+
+              <Text style={styles.label}>Due date</Text>
+
+              {Platform.OS === 'web' ? (
+                <View style={styles.webDateWrapper}>
+                  <input
+                    type="date"
+                    value={dueDate ? dueDate.toISOString().slice(0, 10) : ''}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (!v) return setDueDate(null);
+                      const [y, m, d] = v.split('-').map(Number);
+                      setDueDate(new Date(y, m - 1, d));
+                    }}
+                    style={styles.webDateInput as any}
+                  />
+                </View>
+              ) : (
+                <>
+                  <TouchableOpacity
+                    style={styles.dropdown}
+                    onPress={() => setShowDuePicker(true)}
+                  >
+                    <Text style={{ color: dueDate ? '#000' : '#888', fontWeight: '600' }}>
+                      {dueDate ? dueDate.toDateString() : 'Select due date'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {showDuePicker && (
+                    <DateTimePicker
+                      value={dueDate ?? new Date()}
+                      mode="date"
+                      display="default"
+                      onChange={(event, selectedDate) => {
+                        setShowDuePicker(false);
+                        if ((event as any)?.type === 'dismissed') return;
+                        if (selectedDate) setDueDate(selectedDate);
+                      }}
+                    />
+                  )}
+                </>
+              )}
+
 
               <Text style={styles.label}>Note</Text>
               <FormInput value={note} onChangeText={setNote} placeholder="Enter note" />
@@ -318,6 +395,37 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ccc'
   },
+   webDateWrapper: {
+  position: 'relative',
+  width: '100%',
+},
+webDateIcon: {
+  position: 'absolute',
+  right: 12,
+  top: '50%',
+  transform: [{ translateY: -10 }],
+  pointerEvents: 'none',
+},
+
+webDateInput: {
+  width: '100%',
+  height: 48,               
+  paddingLeft: 14,
+  paddingRight: 42,    
+  borderRadius: 8,
+  borderWidth: 1,
+  borderColor: '#ccc',
+  fontSize: 16,
+  backgroundColor: '#fff',
+
+  // @ts-ignore
+  boxSizing: 'border-box',
+  // @ts-ignore
+  appearance: 'none',
+  WebkitAppearance: 'none',
+},
+
+
 });
 
 export default AddTransaction;
