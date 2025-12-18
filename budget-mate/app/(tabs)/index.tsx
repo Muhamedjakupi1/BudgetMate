@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, memo, useCallback } from "react";
 import { FlatList, StatusBar, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from "react-native";
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -12,6 +12,46 @@ import * as Notifications from "expo-notifications";
 
 type NotifType = "bill_reminder" | "summary" | "low_budget" | "unusual_spending";
 type NotifChannel = "push" | "in_app";
+
+const ExpenseItem = memo(({ item, onDelete, onDone, onEdit }: any) => {
+  console.log("Rendering item:", item.id); 
+  return (
+    <View style={styles.expenseItem}>
+      <View>
+        <Text style={styles.expenseTitle}>
+          {item.category} {item.isExternalApi ? "(FAKE)" : ""}
+        </Text>
+        <Text style={styles.expenseAmount}>€{item.amount}</Text>
+        {item.note && <Text style={styles.expenseNote}>{item.note}</Text>}
+      </View>
+      <View style={styles.buttonsContainer}>
+        <TouchableOpacity
+          style={[styles.btn, { backgroundColor: "#d41309ff" }]}
+          onPress={() => onDelete(item)}
+        >
+          <Text style={{ color: "white", fontWeight: "500" }}>Delete</Text>
+        </TouchableOpacity>
+        
+        {!item.isExternalApi && (
+          <>
+            <TouchableOpacity
+              style={[styles.btn, { backgroundColor: "#518e59ff" }]}
+              onPress={() => onDone(item)}
+            >
+              <Text style={{ color: "white", fontWeight: "500" }}>Done</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.btn, { backgroundColor: "#34aac7" }]}
+              onPress={() => onEdit(item)}
+            >
+              <Text style={{ color: "white", fontWeight: "500" }}>Edit</Text>
+            </TouchableOpacity>
+          </>
+        )}
+      </View>
+    </View>
+  );
+});
 
 async function createNotificationIfNotExists(params: {
   uid: string;
@@ -263,22 +303,22 @@ export default function HomePage() {
   };
 
 
-  const handleEditPress = (txn: Transaction) => {
-    if (!txn.isExternalApi) router.push(`/expense/${txn.id}`)
-  };
+  const handleEditPress = useCallback((txn: Transaction) => {
+  if (!txn.isExternalApi) router.push(`/expense/${txn.id}`);
+}, []);
 
-  const handleDeletePress = (txn: Transaction) => {
-    setSelectedTransaction(txn);
-    setModalAction('delete');
-    setModalVisible(true);
-  };
+  const handleDeletePress = useCallback((txn: Transaction) => {
+  setSelectedTransaction(txn);
+  setModalAction('delete');
+  setModalVisible(true);
+}, []);
 
-  const handleDonePress = (txn: Transaction) => {
-    if (txn.isExternalApi) return;
-    setSelectedTransaction(txn);
-    setModalAction("done");
-    setModalVisible(true);
-  };
+  const handleDonePress = useCallback((txn: Transaction) => {
+  if (txn.isExternalApi) return;
+  setSelectedTransaction(txn);
+  setModalAction("done");
+  setModalVisible(true);
+}, []);
 
   const handleConfirm = async () => {
     if (!selectedTransaction || !user) return;
@@ -302,40 +342,14 @@ export default function HomePage() {
     (t) => t.type === "expense" && !t.done
   );
 
-  const renderExpense = ({ item }: { item: Transaction }) => (
-    <View style={styles.expenseItem}>
-      <View>
-        <Text style={styles.expenseTitle}>{item.category}
-          {item.isExternalApi ? "(FAKE)" : ""}</Text>
-        <Text style={styles.expenseAmount}>€{item.amount}</Text>
-        {item.note && <Text style={styles.expenseNote}>{item.note}</Text>}
-      </View>
-      <View style={styles.buttonsContainer}>
-        <TouchableOpacity
-          style={[styles.btn, { backgroundColor: "#d41309ff" }]}
-          onPress={() => handleDeletePress(item)}
-        >
-          <Text style={{ color: "white", fontWeight: 500 }}>Delete</Text>
-        </TouchableOpacity>
-        {!item.isExternalApi && (
-          <TouchableOpacity
-            style={[styles.btn, { backgroundColor: "#518e59ff" }]}
-            onPress={() => handleDonePress(item)}
-          >
-            <Text style={{ color: "white", fontWeight: 500 }}>Done</Text>
-          </TouchableOpacity>
-        )}
-        {!item.isExternalApi && (
-          <TouchableOpacity
-            style={[styles.btn, { backgroundColor: "#34aac7" }]}
-            onPress={() => handleEditPress(item)}
-          >
-            <Text style={{ color: "white" , fontWeight: 500}}>Edit</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-    </View>
-  );
+  const renderExpense = useCallback(({ item }: { item: Transaction }) => (
+  <ExpenseItem 
+    item={item} 
+    onDelete={handleDeletePress} 
+    onDone={handleDonePress} 
+    onEdit={handleEditPress} 
+  />
+), [handleDeletePress, handleDonePress, handleEditPress]);
 
   return (
     <SafeAreaView style={styles.container}>
