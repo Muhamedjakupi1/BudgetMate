@@ -10,10 +10,16 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "test": "jest",
-     "test:watch": "jest --watchAll"
+    "test:watch": "jest --watchAll"
   },
   "jest": {
-    "preset": "jest-expo"
+    "preset": "jest-expo",
+    "setupFilesAfterEnv": [
+      "@testing-library/jest-native/extend-expect"
+    ],
+    "transformIgnorePatterns": [
+      "node_modules/(?!(jest-)?react-native|@react-native|expo|@expo|expo-router)"
+    ]
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
