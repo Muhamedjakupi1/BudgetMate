@@ -137,5 +137,33 @@ describe('Button Visibility', ()=>{
     });
   });
 
-  
+  describe('Different Modal Types', () => {
+    it('displays success modal with correct styling', () => {
+      const { getByText } = render(
+        <ConfirmModal
+          visible={true}
+          type="success"
+          message="Operation successful"
+          onClose={mockOnClose}
+        />
+      );
+
+      expect(getByText('Success')).toBeTruthy();
+      expect(getByText('Operation successful')).toBeTruthy();
+    });
+
+    it('displays error modal with correct styling', () => {
+      const { getByText } = render(
+        <ConfirmModal
+          visible={true}
+          type="error"
+          message="Operation failed"
+          onClose={mockOnClose}
+        />
+      );
+
+      expect(getByText('Error')).toBeTruthy();
+      expect(getByText('Operation failed')).toBeTruthy();
+    });
+  });
  });
