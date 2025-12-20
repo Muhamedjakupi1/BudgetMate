@@ -10,16 +10,27 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { db } from '../../firebase';
-import { onSnapshot, collection, doc, updateDoc, addDoc, serverTimestamp, getDocs, where, limit, deleteDoc, query } from 'firebase/firestore';
+import {
+  onSnapshot,
+  collection,
+  doc,
+  updateDoc,
+  addDoc,
+  serverTimestamp,
+  getDocs,
+  where,
+  limit,
+  deleteDoc,
+  query,
+} from 'firebase/firestore';
 import { router } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import * as ImagePicker from 'expo-image-picker';
 import ConfirmModal from '../../components/ui/modalWithButtons';
 import { Ionicons } from '@expo/vector-icons';
-import useTabAnimation  from "../hooks/tabAnimation";
-import { Animated } from "react-native";
-import { useFocusEffect } from "expo-router";
-
+import useTabAnimation from '../hooks/tabAnimation';
+import { Animated } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 
 type Transaction = {
   id: string;
@@ -34,6 +45,8 @@ const Profile = () => {
 
   const photoScale = useRef(new Animated.Value(currentUser?.image ? 0.85 : 1)).current;
   const photoOpacity = useRef(new Animated.Value(currentUser?.image ? 0 : 1)).current;
+
+  const logoutAnim = useRef(new Animated.Value(0)).current; // 0 = normal, 1 = slide-out
 
   useFocusEffect(
     useCallback(() => {
@@ -99,27 +112,26 @@ const Profile = () => {
   };
 
   const createProfileSetupNotifIfMissing = async () => {
-    const notifsRef = collection(db, "users", currentUser.uid, "notifications");
+    const notifsRef = collection(db, 'users', currentUser.uid, 'notifications');
 
-    const dedupeKey = "profile_setup:no_photo";
+    const dedupeKey = 'profile_setup:no_photo';
     const existing = await getDocs(
-      query(notifsRef, where("dedupeKey", "==", dedupeKey), limit(1))
+      query(notifsRef, where('dedupeKey', '==', dedupeKey), limit(1))
     );
     if (!existing.empty) return;
 
     await addDoc(notifsRef, {
-      type: "profile_setup",
-      channel: "in_app",
-      title: "Add a profile photo",
-      body: "Upload a profile picture to personalize your account.",
+      type: 'profile_setup',
+      channel: 'in_app',
+      title: 'Add a profile photo',
+      body: 'Upload a profile picture to personalize your account.',
       dedupeKey,
       createdAt: serverTimestamp(),
       scheduledAt: serverTimestamp(),
       read: false,
-      status: "active",
+      status: 'active',
     });
   };
-
 
   const openConfirm = (action: 'removePhoto' | 'logout') => {
     setConfirmAction(action);
@@ -135,7 +147,6 @@ const Profile = () => {
     }
   }, [currentUser?.uid, currentUser?.image]);
 
-
   useEffect(() => {
     const transactionsRef = collection(
       db,
@@ -143,6 +154,7 @@ const Profile = () => {
       currentUser.uid,
       'transactions'
     );
+
     const unsubscribe = onSnapshot(transactionsRef, (snapshot) => {
       const docs = snapshot.docs.map((docSnap) => {
         const data = docSnap.data();
@@ -163,8 +175,7 @@ const Profile = () => {
   }, [currentUser.uid]);
 
   const pickImage = async () => {
-    const { status } =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       showModal('error', 'Need permission to access photos!');
       return;
@@ -184,8 +195,7 @@ const Profile = () => {
   };
 
   const takePhoto = async () => {
-    const { status } =
-      await ImagePicker.requestCameraPermissionsAsync();
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
       showModal('error', 'Need camera permission!');
       return;
@@ -216,13 +226,19 @@ const Profile = () => {
       showModal('error', 'Failed to upload image');
     }
 
-    const notifsRef = collection(db, "users", currentUser.uid, "notifications");
+    const notifsRef = collection(db, 'users', currentUser.uid, 'notifications');
     const snap = await getDocs(
-      query(notifsRef, where("dedupeKey", "==", "profile_setup:no_photo"), limit(1))
+      query(
+        notifsRef,
+        where('dedupeKey', '==', 'profile_setup:no_photo'),
+        limit(1)
+      )
     );
 
     if (!snap.empty) {
-      await deleteDoc(doc(db, "users", currentUser.uid, "notifications", snap.docs[0].id));
+      await deleteDoc(
+        doc(db, 'users', currentUser.uid, 'notifications', snap.docs[0].id)
+      );
     }
   };
 
@@ -251,13 +267,27 @@ const Profile = () => {
   };
 
   const confirmLogout = async () => {
+    if (isLoggingOut) return;
+
     setIsLoggingOut(true);
-    router.replace('/(auth)');
-    try {
-      await logout();
-    } catch (err) {
-      console.warn('Logout failed (already navigated)');
-    }
+    setConfirmVisible(false);
+
+    Animated.timing(logoutAnim, {
+      toValue: 1,
+      duration: 420,
+      useNativeDriver: true,
+    }).start(async () => {
+      router.replace('/(auth)');
+
+      try {
+        await logout();
+      } catch (err) {
+        console.warn('Logout failed (already navigated)');
+      } finally {
+        logoutAnim.setValue(0);
+        setIsLoggingOut(false);
+      }
+    });
   };
 
   const totalIncome = transactions
@@ -277,8 +307,37 @@ const Profile = () => {
     <Animated.View
       style={{
         flex: 1,
-        opacity,
-        transform: [{ scale }],
+
+        opacity: Animated.multiply(
+          opacity,
+          logoutAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [1, 0],
+          })
+        ),
+
+        transform: [
+          { scale },
+
+          {
+            translateX: logoutAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, 420],
+            }),
+          },
+          {
+            rotate: logoutAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: ['0deg', '6deg'],
+            }),
+          },
+          {
+            scale: logoutAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [1, 0.95],
+            }),
+          },
+        ],
       }}
     >
       <SafeAreaView style={styles.container}>
@@ -327,7 +386,6 @@ const Profile = () => {
                 <Text style={styles.actionText}>Remove</Text>
               </TouchableOpacity>
             </View>
-
 
             <Text style={styles.userName}>{userName}</Text>
             <Text style={styles.userEmail}>{userEmail}</Text>
@@ -389,31 +447,31 @@ const Profile = () => {
 export default Profile;
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#f7f7f7' 
+  container: {
+    flex: 1,
+    backgroundColor: '#f7f7f7',
   },
-  sContainer: { 
-    flex: 1, 
-    padding: 20, 
-    alignItems: 'center' 
+  sContainer: {
+    flex: 1,
+    padding: 20,
+    alignItems: 'center',
   },
-  loadingText: { 
-    marginTop: 15, 
-    fontSize: 16, 
-    color: '#666' 
+  loadingText: {
+    marginTop: 15,
+    fontSize: 16,
+    color: '#666',
   },
-  profileHeader: { 
-    alignItems: 'center', 
-    marginBottom: 30 
+  profileHeader: {
+    alignItems: 'center',
+    marginBottom: 30,
   },
-  profileImage: { 
-    width: 200, 
-    height: 200, 
-    borderRadius: 100, 
-    marginBottom: 20, 
-    borderWidth: 5, 
-    borderColor: "#34aac7" 
+  profileImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    marginBottom: 20,
+    borderWidth: 5,
+    borderColor: '#34aac7',
   },
   placeholder: {
     width: 120,
@@ -424,14 +482,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  placeholderText: { 
-    color: '#888', 
-    fontSize: 14 
+  placeholderText: {
+    color: '#888',
+    fontSize: 14,
   },
-  buttonRow: { 
-    flexDirection: 'row', 
-    width: '100%', 
-    marginBottom: 20 
+  buttonRow: {
+    flexDirection: 'row',
+    width: '100%',
+    marginBottom: 20,
   },
   smallButton: {
     flex: 1,
@@ -441,25 +499,25 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
     alignItems: 'center',
   },
-  btnText: { 
-    color: '#fff', 
-    fontWeight: '600', 
-    fontSize: 13 
+  btnText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 13,
   },
-  userName: { 
-    fontSize: 24, 
-    fontWeight: 'bold', 
-    color: '#222' 
+  userName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#222',
   },
-  userEmail: { 
-    fontSize: 16, 
-    color: '#666', 
-    marginTop: 5 
+  userEmail: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 5,
   },
-  statsContainer: { 
-    flexDirection: 'row', 
-    width: '100%', 
-    marginBottom: 40 
+  statsContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    marginBottom: 40,
   },
   statBox: {
     flex: 1,
@@ -473,15 +531,15 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
   },
-  statNumber: { 
-    fontSize: 20, 
-    fontWeight: 'bold', 
-    color: '#222' 
+  statNumber: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#222',
   },
-  statLabel: { 
-    fontSize: 13, 
-    color: '#777', 
-    marginTop: 5 
+  statLabel: {
+    fontSize: 13,
+    color: '#777',
+    marginTop: 5,
   },
   logoutBtn: {
     width: '100%',
@@ -490,10 +548,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
   },
-  logoutText: { 
-    color: '#fff', 
-    fontWeight: 'bold', 
-    fontSize: 17 
+  logoutText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 17,
   },
   actionButton: {
     flex: 1,
@@ -510,5 +568,4 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 4,
   },
-
 });
