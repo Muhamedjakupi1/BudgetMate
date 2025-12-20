@@ -1,4 +1,4 @@
-import React , { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Text, TouchableOpacity, StyleSheet, StatusBar, Animated, View } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";

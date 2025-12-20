@@ -47,6 +47,18 @@ const AddTransaction: React.FC = () => {
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [showDuePicker, setShowDuePicker] = useState(false);
   const { opacity, scale } = useTabAnimation();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const toLocalYMD = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  };
+
+  const minDateStr = toLocalYMD(today);
+
   const switchType = (next: 'income' | 'expense') => {
     setType(next);
     setCategory('');
@@ -331,15 +343,26 @@ const AddTransaction: React.FC = () => {
                   <View style={styles.webDateWrapper}>
                     <input
                       type="date"
-                      value={dueDate ? dueDate.toISOString().slice(0, 10) : ''}
+                      min={minDateStr}
+                      value={dueDate ? toLocalYMD(dueDate) : ""}
                       onChange={(e) => {
                         const v = e.target.value;
                         if (!v) return setDueDate(null);
-                        const [y, m, d] = v.split('-').map(Number);
-                        setDueDate(new Date(y, m - 1, d));
+
+                        const [y, m, d] = v.split("-").map(Number);
+                        const picked = new Date(y, m - 1, d);
+                        picked.setHours(0, 0, 0, 0);
+
+                        if (picked < today) {
+                          setDueDate(today);
+                          return;
+                        }
+
+                        setDueDate(picked);
                       }}
                       style={styles.webDateInput as any}
                     />
+
                   </View>
                 ) : (
                   <>
@@ -354,16 +377,29 @@ const AddTransaction: React.FC = () => {
 
                     {showDuePicker && (
                       <View style={styles.iosPickerContainer}>
-                        <DateTimePicker
-                          value={dueDate ?? new Date()}
-                          mode="date"
-                          display="spinner"
-                          onChange={(event, selectedDate) => {
-                            setShowDuePicker(false);
-                            if ((event as any)?.type === 'dismissed') return;
-                            if (selectedDate) setDueDate(selectedDate);
-                          }}
-                        />
+                          <DateTimePicker
+                            value={dueDate ?? today}
+                            mode="date"
+                            display="spinner"
+                            minimumDate={today}
+                            onChange={(event, selectedDate) => {
+                              setShowDuePicker(false);
+                              if ((event as any)?.type === "dismissed") return;
+
+                              if (selectedDate) {
+                                const picked = new Date(selectedDate);
+                                picked.setHours(0, 0, 0, 0);
+
+                                if (picked < today) {
+                                  setDueDate(today);
+                                  return;
+                                }
+
+                                setDueDate(picked);
+                              }
+                            }}
+                          />
+
                       </View>
                     )}
                   </>

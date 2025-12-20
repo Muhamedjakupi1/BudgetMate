@@ -22,6 +22,8 @@ export default function RootLayout() {
           {/* Main app with tabs */}
           <Stack.Screen name="(tabs)" />
 
+          <Stack.Screen name="expense/[id]" options={{ animation: "slide_from_right",}}/>
+
           {/* Optional: modal or other top-level pages */}
           <Stack.Screen name="modal" options={{ presentation: "modal", title: "Modal" }} />
         </Stack>
