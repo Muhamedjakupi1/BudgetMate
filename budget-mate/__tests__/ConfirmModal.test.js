@@ -119,6 +119,22 @@ describe('Button Visibility', ()=>{
       expect(mockOnClose).toHaveBeenCalledTimes(1);
       expect(mockOnConfirm).not.toHaveBeenCalled();
     });
+
+    it('calls both onConfirm and onClose when Confirm button is pressed', () => {
+      const { getByText } = render(
+        <ConfirmModal
+          visible={true}
+          message="Test message"
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          showConfirm={true}
+        />
+      );
+
+      fireEvent.press(getByText('Confirm'));
+      expect(mockOnConfirm).toHaveBeenCalledTimes(1);
+      expect(mockOnClose).toHaveBeenCalledTimes(1);
+    });
   });
 
   
