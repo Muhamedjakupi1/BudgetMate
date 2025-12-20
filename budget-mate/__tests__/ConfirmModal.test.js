@@ -90,4 +90,20 @@ describe('Button Visibility', ()=>{
       expect(getByText('Cancel')).toBeTruthy();
     });
 });
+  describe('User Interactions', () => {
+    it('calls onClose when OK button is pressed', () => {
+      const { getByText } = render(
+        <ConfirmModal
+          visible={true}
+          message="Test message"
+          onClose={mockOnClose}
+        />
+      );
+
+      fireEvent.press(getByText('OK'));
+      expect(mockOnClose).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  
  });
