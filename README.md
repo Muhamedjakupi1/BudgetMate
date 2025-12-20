@@ -51,9 +51,9 @@ BudgetMate is a comprehensive budget tracking application that allows users to:
     <td align="center"><b>Sign Up</b></td>
   </tr>
   <tr>
-    <td><img src="budget-mate/assets/images/app-pages/entry-screen.jpeg" width="250" height="330" /></td>
-    <td><img src="budget-mate/assets/images/app-pages/log-in-screen.jpeg" width="250" height="330" /></td>
-    <td><img src="budget-mate/assets/images/app-pages/sign-up-screen.jpeg" width="250" height="330" /></td>
+    <td><img src="budget-mate/assets/images/app-pages/entry-screen.jpeg" width="250" height="370" /></td>
+    <td><img src="budget-mate/assets/images/app-pages/log-in-screen.jpeg" width="250" height="370" /></td>
+    <td><img src="budget-mate/assets/images/app-pages/sign-up-screen.jpeg" width="250" height="370" /></td>
   </tr>
 
   <tr>
@@ -62,9 +62,9 @@ BudgetMate is a comprehensive budget tracking application that allows users to:
     <td align="center"><b>Add Expense</b></td>
   </tr>
   <tr>
-    <td><img src="budget-mate/assets/images/app-pages/homepage-screen.jpeg" width="250" height="330" /></td>
-    <td><img src="budget-mate/assets/images/app-pages/add-income-screen.jpeg" width="250" height="330" /></td>
-    <td><img src="budget-mate/assets/images/app-pages/add-expense-screen.jpeg" width="250" height="330" /></td>
+    <td><img src="budget-mate/assets/images/app-pages/homepage-screen.jpeg" width="250" height="370" /></td>
+    <td><img src="budget-mate/assets/images/app-pages/add-income-screen.jpeg" width="250" height="370" /></td>
+    <td><img src="budget-mate/assets/images/app-pages/add-expense-screen.jpeg" width="250" height="370" /></td>
   </tr>
 
   <tr>
@@ -73,9 +73,9 @@ BudgetMate is a comprehensive budget tracking application that allows users to:
     <td align="center"><b>Notifications</b></td>
   </tr>
   <tr>
-    <td><img src="budget-mate/assets/images/app-pages/expense-history-screen.jpeg" width="250" height="330" /></td>
-    <td><img src="budget-mate/assets/images/app-pages/profile-screen.jpeg" width="250" height="330" /></td>
-    <td><img src="budget-mate/assets/images/app-pages/notifications-screen.jpeg" width="250" height="330" /></td>
+    <td><img src="budget-mate/assets/images/app-pages/expense-history-screen.jpeg" width="250" height="370" /></td>
+    <td><img src="budget-mate/assets/images/app-pages/profile-screen.jpeg" width="250" height="370" /></td>
+    <td><img src="budget-mate/assets/images/app-pages/notifications-screen.jpeg" width="250" height="370" /></td>
   </tr>
 </table>
 
