@@ -5,8 +5,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  StatusBar,
-  Alert
+  StatusBar
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,6 +17,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 import StatusModal from '../../components/ui/statusModal';
 import { setDoc } from "firebase/firestore";
+import AnimatedPressButton from "../../components/ui/animatedButton";
 
 export default function SignInScreen() {
   const [email, setEmail] = useState('');
@@ -160,16 +160,23 @@ export default function SignInScreen() {
           />
         </View>
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+        <AnimatedPressButton
+          style={styles.button}
+          onPress={handleLogin}
+          disabled={loading}
+        >
           <Text style={styles.buttonText}>{loading ? "Signing in..." : "Sign in"}</Text>
-        </TouchableOpacity>
+        </AnimatedPressButton>
 
-        <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
+        <AnimatedPressButton
+          style={styles.googleButton}
+          onPress={handleGoogleLogin}
+        >
           <View style={styles.googleContent}>
             <Ionicons name="logo-google" size={20} color="#4285F4" style={styles.googleIcon} />
             <Text style={styles.googleText}>Sign in with Google</Text>
           </View>
-        </TouchableOpacity>
+        </AnimatedPressButton>
 
 
         <View style={styles.footerRow}>

@@ -3,7 +3,7 @@ import { Text, TouchableOpacity, StyleSheet, StatusBar, Animated, View } from "r
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
-
+import AnimatedPressButton from "../../components/ui/animatedButton";
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -52,12 +52,12 @@ export default function WelcomeScreen() {
         />
       </Animated.View>
 
-      <TouchableOpacity
+      <AnimatedPressButton
         style={styles.signupButton}
         onPress={() => router.push("/(auth)/signup")}
       >
         <Text style={styles.signupText}>Sign Up</Text>
-      </TouchableOpacity>
+      </AnimatedPressButton>
 
       <Text style={styles.signinText}>
         Already have an account?{" "}

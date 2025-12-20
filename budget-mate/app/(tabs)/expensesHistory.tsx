@@ -6,7 +6,7 @@ import { collection, query, onSnapshot,serverTimestamp, getDocs, where, limit, a
 import { db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 import { Ionicons } from '@expo/vector-icons';
-import { useTabAnimation } from "../hooks/tabAnimation";
+import useTabAnimation from "../hooks/tabAnimation";
 import { Animated } from "react-native";
 
 

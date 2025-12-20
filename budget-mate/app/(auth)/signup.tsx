@@ -18,6 +18,7 @@ import { updateProfile } from "firebase/auth";
 import { auth, db } from "../../firebase";
 import { doc, setDoc } from "firebase/firestore";
 import StatusModal from '../../components/ui/statusModal'
+import AnimatedPressButton from "../../components/ui/animatedButton";
 
 type Errors = {
   name?: string;
@@ -234,9 +235,15 @@ export default function SignUpScreen() {
         </View>
         {errors.terms && <Text style={styles.error}>{errors.terms}</Text>}
 
-        <TouchableOpacity style={styles.button} onPress={handleSignUp}>
-          <Text style={styles.buttonText}>{loading ? "Creating user..." : "Create Account"}</Text>
-        </TouchableOpacity>
+        <AnimatedPressButton
+          style={styles.button}
+          onPress={handleSignUp}
+          disabled={loading}
+        >
+          <Text style={styles.buttonText}>
+            {loading ? "Creating user..." : "Create Account"}
+          </Text>
+        </AnimatedPressButton>
 
         <View style={styles.footerRow}>
           <Text style={styles.small}>Already have an account?</Text>

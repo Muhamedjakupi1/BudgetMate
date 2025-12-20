@@ -9,8 +9,9 @@ import ConfirmModal from '../../components/ui/modalWithButtons';
 import { Transaction, generateRandomTransactions } from "../../components/fakeTransaction";
 import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from "expo-notifications";
-import { useTabAnimation } from "../hooks/tabAnimation";
+import useTabAnimation from "../hooks/tabAnimation";
 import { Animated } from "react-native";
+import CountUpNumber from "../../components/ui/countUpNum";
 
 type NotifType = "bill_reminder" | "summary" | "low_budget" | "unusual_spending";
 type NotifChannel = "push" | "in_app";
@@ -365,10 +366,10 @@ export default function HomePage() {
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="white" />
         <View style={styles.header}>
-          <Text style={styles.budgetText}>
-            <Ionicons name="cash" size={24} color="green" />
-            <View style={{ width: 8 }} />
-            Budget: €{balance.toFixed(2)}</Text>
+          <Ionicons name="cash" size={24} color="green" />
+          <View style={{ width: 8 }} />
+          <Text style={styles.budgetText}>Budget: </Text>
+          <CountUpNumber value={balance} prefix="€" decimals={2} style={styles.budgetText} />
         </View>
         <TouchableOpacity
           style={[styles.btn, { backgroundColor: "#34aac7", marginBottom: 20 }]}

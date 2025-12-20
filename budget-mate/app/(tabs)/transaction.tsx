@@ -9,7 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import StatusModal from '../../components/ui/statusModal';
 import { useRouter } from 'expo-router';
 import * as Notifications from "expo-notifications";
-import { useTabAnimation } from "../hooks/tabAnimation";
+import  useTabAnimation from "../hooks/tabAnimation";
 import { Animated } from "react-native";
 
 const categoryColors: Record<string, string> = {

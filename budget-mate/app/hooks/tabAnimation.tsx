@@ -2,7 +2,7 @@ import { useRef, useCallback } from "react";
 import { Animated } from "react-native";
 import { useFocusEffect } from "expo-router";
 
-export function useTabAnimation() {
+export default function useTabAnimation() {
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.97)).current;
 

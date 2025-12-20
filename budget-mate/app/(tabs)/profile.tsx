@@ -16,7 +16,7 @@ import { useAuth } from '../../context/AuthContext';
 import * as ImagePicker from 'expo-image-picker';
 import ConfirmModal from '../../components/ui/modalWithButtons';
 import { Ionicons } from '@expo/vector-icons';
-import { useTabAnimation } from "../hooks/tabAnimation";
+import useTabAnimation  from "../hooks/tabAnimation";
 import { Animated } from "react-native";
 import { useFocusEffect } from "expo-router";
 
