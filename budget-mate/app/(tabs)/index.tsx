@@ -1,20 +1,22 @@
-import React, { useEffect, useState, memo, useCallback } from "react";
+import { useEffect, useState, memo, useCallback } from "react";
 import { FlatList, StatusBar, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from "react-native";
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../context/AuthContext";
-import { collection, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc, addDoc, serverTimestamp, Timestamp, getDocs, where, limit,} from "firebase/firestore";
+import { collection, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc, addDoc, serverTimestamp, Timestamp, getDocs, where, limit, } from "firebase/firestore";
 import { db } from "../../firebase";
 import ConfirmModal from '../../components/ui/modalWithButtons';
 import { Transaction, generateRandomTransactions } from "../../components/fakeTransaction";
 import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from "expo-notifications";
+import { useTabAnimation } from "../hooks/tabAnimation";
+import { Animated } from "react-native";
 
 type NotifType = "bill_reminder" | "summary" | "low_budget" | "unusual_spending";
 type NotifChannel = "push" | "in_app";
 
 const ExpenseItem = memo(({ item, onDelete, onDone, onEdit }: any) => {
-  console.log("Rendering item:", item.id); 
+  console.log("Rendering item:", item.id);
   return (
     <View style={styles.expenseItem}>
       <View>
@@ -31,7 +33,7 @@ const ExpenseItem = memo(({ item, onDelete, onDone, onEdit }: any) => {
         >
           <Text style={{ color: "white", fontWeight: "500" }}>Delete</Text>
         </TouchableOpacity>
-        
+
         {!item.isExternalApi && (
           <>
             <TouchableOpacity
@@ -112,6 +114,7 @@ export default function HomePage() {
   const [statusModalVisible, setStatusModalVisible] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const router = useRouter();
+  const { opacity, scale } = useTabAnimation();
   useEffect(() => {
     if (!user) return;
 
@@ -173,9 +176,9 @@ export default function HomePage() {
             sound: true,
           },
           trigger: { seconds: Math.max(5, Math.floor((scheduledAt.getTime() - Date.now()) / 1000)), repeats: false } as any,
-    });
+        });
 
-    await createNotificationIfNotExists({
+        await createNotificationIfNotExists({
           uid: user.uid,
           type: "bill_reminder",
           channel: "push",
@@ -202,13 +205,13 @@ export default function HomePage() {
         dedupeKey: `summary:day:${dayKey}`,
         meta: { spentToday },
       });
-      
+
       const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       const spent7d = trans
         .filter((t) => t.type === "expense" && t.done && t.date && new Date(t.date as any) >= sevenDaysAgo)
         .reduce((sum, t) => sum + (t.amount || 0), 0);
 
-      const UNUSUAL_THRESHOLD = 200; 
+      const UNUSUAL_THRESHOLD = 200;
       if (spent7d > UNUSUAL_THRESHOLD) {
         await createNotificationIfNotExists({
           uid: user.uid,
@@ -304,21 +307,21 @@ export default function HomePage() {
 
 
   const handleEditPress = useCallback((txn: Transaction) => {
-  if (!txn.isExternalApi) router.push(`/expense/${txn.id}`);
-}, []);
+    if (!txn.isExternalApi) router.push(`/expense/${txn.id}`);
+  }, []);
 
   const handleDeletePress = useCallback((txn: Transaction) => {
-  setSelectedTransaction(txn);
-  setModalAction('delete');
-  setModalVisible(true);
-}, []);
+    setSelectedTransaction(txn);
+    setModalAction('delete');
+    setModalVisible(true);
+  }, []);
 
   const handleDonePress = useCallback((txn: Transaction) => {
-  if (txn.isExternalApi) return;
-  setSelectedTransaction(txn);
-  setModalAction("done");
-  setModalVisible(true);
-}, []);
+    if (txn.isExternalApi) return;
+    setSelectedTransaction(txn);
+    setModalAction("done");
+    setModalVisible(true);
+  }, []);
 
   const handleConfirm = async () => {
     if (!selectedTransaction || !user) return;
@@ -343,72 +346,80 @@ export default function HomePage() {
   );
 
   const renderExpense = useCallback(({ item }: { item: Transaction }) => (
-  <ExpenseItem 
-    item={item} 
-    onDelete={handleDeletePress} 
-    onDone={handleDonePress} 
-    onEdit={handleEditPress} 
-  />
-), [handleDeletePress, handleDonePress, handleEditPress]);
+    <ExpenseItem
+      item={item}
+      onDelete={handleDeletePress}
+      onDone={handleDonePress}
+      onEdit={handleEditPress}
+    />
+  ), [handleDeletePress, handleDonePress, handleEditPress]);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="white" />
-      <View style={styles.header}>
-        <Text style={styles.budgetText}>
-          <Ionicons name="cash" size={24} color="green" />
-          <View style={{ width: 8 }} />
-           Budget: €{balance.toFixed(2)}</Text>
-      </View>
-      <TouchableOpacity
-        style={[styles.btn, { backgroundColor: "#34aac7", marginBottom: 20 }]}
-        onPress={addRandomTransactions}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={{ color: "white" }}>Add 5 Random Expenses (API)</Text>
-        )}
-      </TouchableOpacity>
-
-      {pendingExpenses.length > 0 ? (
-        <FlatList
-          data={pendingExpenses}
-          keyExtractor={(item) => item.id}
-          renderItem={renderExpense}
-          contentContainerStyle={styles.listContainer}
-        />
-      ) : (
-        <View style={styles.noExpenseContainer}>
-          <Text style={styles.noExpenseEmoji}>🎉</Text>
-          <Text style={styles.noExpenseTitle}>No Pending Expenses!</Text>
-          <Text style={styles.noExpenseSubtitle}>
-            All your expenses are settled{"\n"}Add some income to get started
-          </Text>
+    <Animated.View
+      style={{
+        flex: 1,
+        opacity,
+        transform: [{ scale }],
+      }}
+    >
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="white" />
+        <View style={styles.header}>
+          <Text style={styles.budgetText}>
+            <Ionicons name="cash" size={24} color="green" />
+            <View style={{ width: 8 }} />
+            Budget: €{balance.toFixed(2)}</Text>
         </View>
-      )}
+        <TouchableOpacity
+          style={[styles.btn, { backgroundColor: "#34aac7", marginBottom: 20 }]}
+          onPress={addRandomTransactions}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={{ color: "white" }}>Add 5 Random Expenses (API)</Text>
+          )}
+        </TouchableOpacity>
 
-      <ConfirmModal
-        visible={modalVisible}
-        type={modalAction === 'delete' ? 'error' : 'success'}
-        message={
-          modalAction === 'delete'
-            ? 'Are you sure you want to delete this expense?'
-            : 'Mark this transaction as done?'
-        }
-        showConfirm={true}
-        onClose={() => setModalVisible(false)}
-        onConfirm={handleConfirm}
-      />
-      <ConfirmModal
-        visible={statusModalVisible}
-        type="error"
-        message={statusMessage}
-        showConfirm={false}      
-        onClose={() => setStatusModalVisible(false)}
-      />
-    </SafeAreaView>
+        {pendingExpenses.length > 0 ? (
+          <FlatList
+            data={pendingExpenses}
+            keyExtractor={(item) => item.id}
+            renderItem={renderExpense}
+            contentContainerStyle={styles.listContainer}
+          />
+        ) : (
+          <View style={styles.noExpenseContainer}>
+            <Text style={styles.noExpenseEmoji}>🎉</Text>
+            <Text style={styles.noExpenseTitle}>No Pending Expenses!</Text>
+            <Text style={styles.noExpenseSubtitle}>
+              All your expenses are settled{"\n"}Add some income to get started
+            </Text>
+          </View>
+        )}
+
+        <ConfirmModal
+          visible={modalVisible}
+          type={modalAction === 'delete' ? 'error' : 'success'}
+          message={
+            modalAction === 'delete'
+              ? 'Are you sure you want to delete this expense?'
+              : 'Mark this transaction as done?'
+          }
+          showConfirm={true}
+          onClose={() => setModalVisible(false)}
+          onConfirm={handleConfirm}
+        />
+        <ConfirmModal
+          visible={statusModalVisible}
+          type="error"
+          message={statusMessage}
+          showConfirm={false}
+          onClose={() => setStatusModalVisible(false)}
+        />
+      </SafeAreaView>
+    </Animated.View>
   );
 }
 
@@ -421,8 +432,6 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
     marginBottom: 20
   },
   budgetText: {

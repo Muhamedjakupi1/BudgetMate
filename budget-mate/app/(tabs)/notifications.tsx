@@ -300,12 +300,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 20,
   },
   title: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#111"
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: "#333"
   },
   typeRow: {
     flexDirection: "row",

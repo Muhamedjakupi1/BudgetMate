@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#1c6ed5",
+    color: "#34aac7",
   },
   bodyText: {
     marginTop: 10,
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
   cancelText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#d64545",
+    color: "#d41309ff",
   },
 });
 

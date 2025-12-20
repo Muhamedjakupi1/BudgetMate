@@ -3,12 +3,14 @@ import { View, Text, ScrollView, TouchableOpacity, Pressable, StyleSheet, Status
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FormInput from '../../components/ui/textinput';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { doc, getDoc, addDoc, collection, updateDoc, getDocs, Timestamp, serverTimestamp} from "firebase/firestore";
+import { doc, getDoc, addDoc, collection, updateDoc, getDocs, Timestamp, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebase";
 import { useAuth } from '../../context/AuthContext';
 import StatusModal from '../../components/ui/statusModal';
 import { useRouter } from 'expo-router';
 import * as Notifications from "expo-notifications";
+import { useTabAnimation } from "../hooks/tabAnimation";
+import { Animated } from "react-native";
 
 const categoryColors: Record<string, string> = {
   Transport: '#E53935',
@@ -44,7 +46,7 @@ const AddTransaction: React.FC = () => {
   const [statusType, setStatusType] = useState<"success" | "error">("success");
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [showDuePicker, setShowDuePicker] = useState(false);
-
+  const { opacity, scale } = useTabAnimation();
   const switchType = (next: 'income' | 'expense') => {
     setType(next);
     setCategory('');
@@ -60,202 +62,209 @@ const AddTransaction: React.FC = () => {
 
 
   const handleSave = async () => {
-  const numAmount = parseFloat(amount);
+    const numAmount = parseFloat(amount);
 
-  if (isNaN(numAmount) || numAmount <= 0) {
-    setStatusType("error");
-    setSuccessMessage("Enter a valid amount!");
-    setSuccessModalVisible(true);
-    setTimeout(() => setSuccessModalVisible(false), 1500);
-    return;
-  }
-
-  if (!user) {
-    setStatusType("error");
-    setSuccessMessage("User not logged in!");
-    setSuccessModalVisible(true);
-    setTimeout(() => setSuccessModalVisible(false), 1500);
-    return;
-  }
-
-  if (type === "expense" && !category) {
-    setStatusType("error");
-    setSuccessMessage("Please select a category!");
-    setSuccessModalVisible(true);
-    setTimeout(() => setSuccessModalVisible(false), 1500);
-    return;
-  }
-
-  if (type === "expense" && !dueDate) {
-    setStatusType("error");
-    setSuccessMessage("Please select a due date!");
-    setSuccessModalVisible(true);
-    setTimeout(() => setSuccessModalVisible(false), 1500);
-    return;
-  }
-
-  const userRef = doc(db, "users", user.uid);
-
-  let overallBefore = 0;
-
-  try {
-    const userSnap = await getDoc(userRef);
-    if (!userSnap.exists()) {
+    if (isNaN(numAmount) || numAmount <= 0) {
       setStatusType("error");
-      setSuccessMessage("User data not found!");
+      setSuccessMessage("Enter a valid amount!");
       setSuccessModalVisible(true);
       setTimeout(() => setSuccessModalVisible(false), 1500);
       return;
     }
 
-    overallBefore = userSnap.data()?.overallBudget ?? 0;
-
-    const transactionData: any = {
-      type,
-      amount: numAmount,
-      date: serverTimestamp(),
-      category: type === "expense" ? category : null,
-      note: type === "expense" ? note : null,
-      paymentType: type === "expense" ? paymentType : null,
-      payeeName: type === "expense" ? payeeName : null,
-      done: false,
-      ...(type === "expense" && dueDate ? { dueDate: Timestamp.fromDate(dueDate) } : {}),
-    };
-
-    await addDoc(collection(db, "users", user.uid, "transactions"), transactionData);
-
-    if (type === "income") {
-      await updateDoc(userRef, { overallBudget: overallBefore + numAmount });
+    if (!user) {
+      setStatusType("error");
+      setSuccessMessage("User not logged in!");
+      setSuccessModalVisible(true);
+      setTimeout(() => setSuccessModalVisible(false), 1500);
+      return;
     }
 
-    setAmount("");
-    setCategory("");
-    setNote("");
-    setPaymentType("");
-    setPayeeName("");
-    setCategoryOpen(false);
-    setPaymentOpen(false);
-    setDueDate(null);
-    setShowDuePicker(false);
+    if (type === "expense" && !category) {
+      setStatusType("error");
+      setSuccessMessage("Please select a category!");
+      setSuccessModalVisible(true);
+      setTimeout(() => setSuccessModalVisible(false), 1500);
+      return;
+    }
 
-    setStatusType("success");
-    setSuccessMessage(type === "expense" ? "Expense saved!" : "Income saved!");
-    setSuccessModalVisible(true);
+    if (type === "expense" && !dueDate) {
+      setStatusType("error");
+      setSuccessMessage("Please select a due date!");
+      setSuccessModalVisible(true);
+      setTimeout(() => setSuccessModalVisible(false), 1500);
+      return;
+    }
 
-    setTimeout(() => {
-      setSuccessModalVisible(false);
-      router.push("/(tabs)");
-    }, 900);
-  } catch (error) {
-    console.error("Transaction save failed:", error);
-    setStatusType("error");
-    setSuccessMessage("Could not save transaction. Please try again.");
-    setSuccessModalVisible(true);
-    setTimeout(() => setSuccessModalVisible(false), 900);
-    return;
-  }
+    const userRef = doc(db, "users", user.uid);
 
-  try {
-    if (type === "expense") {
-      const LOW_THRESHOLD = 10;
-      const remaining = overallBefore; 
+    let overallBefore = 0;
 
-      if (remaining <= LOW_THRESHOLD) {
-        await addDoc(collection(db, "users", user.uid, "notifications"), {
-          type: "low_budget",
-          channel: "in_app",
-          title: "Low budget warning",
-          body: `Your remaining budget is €${remaining.toFixed(2)}.`,
-          createdAt: serverTimestamp(),
-          scheduledAt: serverTimestamp(), 
-          read: false,
-          status: "active",
-          meta: { remaining, threshold: LOW_THRESHOLD },
-        });
+    try {
+      const userSnap = await getDoc(userRef);
+      if (!userSnap.exists()) {
+        setStatusType("error");
+        setSuccessMessage("User data not found!");
+        setSuccessModalVisible(true);
+        setTimeout(() => setSuccessModalVisible(false), 1500);
+        return;
       }
 
-      const missing: string[] = [];
-      if (!note.trim()) missing.push("note");
-      if (!payeeName.trim()) missing.push("payee name");
-      if (!paymentType) missing.push("payment type");
+      overallBefore = userSnap.data()?.overallBudget ?? 0;
 
-      if (missing.length > 0) {
-        await addDoc(collection(db, "users", user.uid, "notifications"), {
-          type: "follow_up",
-          channel: "in_app",
-          title: "Complete your expense details",
-          body: `Please add: ${missing.join(", ")}.`,
-          createdAt: serverTimestamp(),
-          scheduledAt: serverTimestamp(),
-          read: false,
-          status: "active",
-          meta: { missing },
-        });
+      const transactionData: any = {
+        type,
+        amount: numAmount,
+        date: serverTimestamp(),
+        category: type === "expense" ? category : null,
+        note: type === "expense" ? note : null,
+        paymentType: type === "expense" ? paymentType : null,
+        payeeName: type === "expense" ? payeeName : null,
+        done: false,
+        ...(type === "expense" && dueDate ? { dueDate: Timestamp.fromDate(dueDate) } : {}),
+      };
+
+      await addDoc(collection(db, "users", user.uid, "transactions"), transactionData);
+
+      if (type === "income") {
+        await updateDoc(userRef, { overallBudget: overallBefore + numAmount });
       }
 
-      if (dueDate) {
-        const twoHoursBefore = new Date(dueDate.getTime() - 2 * 60 * 60 * 1000);
-        const scheduledAt =
-          twoHoursBefore.getTime() > Date.now()
-            ? twoHoursBefore
-            : new Date(Date.now() + 5 * 60 * 1000);
+      setAmount("");
+      setCategory("");
+      setNote("");
+      setPaymentType("");
+      setPayeeName("");
+      setCategoryOpen(false);
+      setPaymentOpen(false);
+      setDueDate(null);
+      setShowDuePicker(false);
 
-        const secondsUntil = Math.max(
-          5,
-          Math.floor((scheduledAt.getTime() - Date.now()) / 1000)
-        );
+      setStatusType("success");
+      setSuccessMessage(type === "expense" ? "Expense saved!" : "Income saved!");
+      setSuccessModalVisible(true);
 
-        const expoId = await Notifications.scheduleNotificationAsync({
-          content: {
+      setTimeout(() => {
+        setSuccessModalVisible(false);
+        router.push("/(tabs)");
+      }, 900);
+    } catch (error) {
+      console.error("Transaction save failed:", error);
+      setStatusType("error");
+      setSuccessMessage("Could not save transaction. Please try again.");
+      setSuccessModalVisible(true);
+      setTimeout(() => setSuccessModalVisible(false), 900);
+      return;
+    }
+
+    try {
+      if (type === "expense") {
+        const LOW_THRESHOLD = 10;
+        const remaining = overallBefore;
+
+        if (remaining <= LOW_THRESHOLD) {
+          await addDoc(collection(db, "users", user.uid, "notifications"), {
+            type: "low_budget",
+            channel: "in_app",
+            title: "Low budget warning",
+            body: `Your remaining budget is €${remaining.toFixed(2)}.`,
+            createdAt: serverTimestamp(),
+            scheduledAt: serverTimestamp(),
+            read: false,
+            status: "active",
+            meta: { remaining, threshold: LOW_THRESHOLD },
+          });
+        }
+
+        const missing: string[] = [];
+        if (!note.trim()) missing.push("note");
+        if (!payeeName.trim()) missing.push("payee name");
+        if (!paymentType) missing.push("payment type");
+
+        if (missing.length > 0) {
+          await addDoc(collection(db, "users", user.uid, "notifications"), {
+            type: "follow_up",
+            channel: "in_app",
+            title: "Complete your expense details",
+            body: `Please add: ${missing.join(", ")}.`,
+            createdAt: serverTimestamp(),
+            scheduledAt: serverTimestamp(),
+            read: false,
+            status: "active",
+            meta: { missing },
+          });
+        }
+
+        if (dueDate) {
+          const twoHoursBefore = new Date(dueDate.getTime() - 2 * 60 * 60 * 1000);
+          const scheduledAt =
+            twoHoursBefore.getTime() > Date.now()
+              ? twoHoursBefore
+              : new Date(Date.now() + 5 * 60 * 1000);
+
+          const secondsUntil = Math.max(
+            5,
+            Math.floor((scheduledAt.getTime() - Date.now()) / 1000)
+          );
+
+          const expoId = await Notifications.scheduleNotificationAsync({
+            content: {
+              title: "Bill reminder",
+              body: `${category} bill is due on ${dueDate.toDateString()}.`,
+              sound: true,
+              data: { category, amount: numAmount },
+            },
+            trigger: { seconds: secondsUntil, repeats: false } as any,
+          });
+
+          await addDoc(collection(db, "users", user.uid, "notifications"), {
+            type: "bill_reminder",
+            channel: "push",
             title: "Bill reminder",
             body: `${category} bill is due on ${dueDate.toDateString()}.`,
-            sound: true,
-            data: { category, amount: numAmount },
-          },
-          trigger: { seconds: secondsUntil, repeats: false } as any,
-        });
-
-        await addDoc(collection(db, "users", user.uid, "notifications"), {
-          type: "bill_reminder",
-          channel: "push",
-          title: "Bill reminder",
-          body: `${category} bill is due on ${dueDate.toDateString()}.`,
-          createdAt: serverTimestamp(),
-          scheduledAt: Timestamp.fromDate(scheduledAt),
-          expoNotificationId: expoId,
-          read: false,
-          status: "active",
-          meta: { dueDate: dueDate.toISOString(), category, amount: numAmount },
-        });
+            createdAt: serverTimestamp(),
+            scheduledAt: Timestamp.fromDate(scheduledAt),
+            expoNotificationId: expoId,
+            read: false,
+            status: "active",
+            meta: { dueDate: dueDate.toISOString(), category, amount: numAmount },
+          });
+        }
       }
+    } catch (e) {
+      console.warn("Notifications failed (transaction saved):", e);
     }
-  } catch (e) {
-    console.warn("Notifications failed (transaction saved):", e);
-  }
-};
+  };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="white" />
-      <View style={styles.container}>
+    <Animated.View
+      style={{
+        flex: 1,
+        opacity,
+        transform: [{ scale }],
+      }}
+    >
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="dark-content" backgroundColor="white" />
+        <View style={styles.container}>
 
-        <View style={styles.navbar}>
-          <TouchableOpacity
-            style={[styles.navItem, type === 'expense' && styles.activeNav]}
-            onPress={() => switchType('expense')}
-          >
-            <Text style={styles.navText}>Expense</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.navItem, type === 'income' && styles.activeNav]}
-            onPress={() => switchType('income')}
-          >
-            <Text style={styles.navText}>Income</Text>
-          </TouchableOpacity>
-        </View>
+          <View style={styles.navbar}>
+            <TouchableOpacity
+              style={[styles.navItem, type === 'expense' && styles.activeNav]}
+              onPress={() => switchType('expense')}
+            >
+              <Text style={styles.navText}>Expense</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.navItem, type === 'income' && styles.activeNav]}
+              onPress={() => switchType('income')}
+            >
+              <Text style={styles.navText}>Income</Text>
+            </TouchableOpacity>
+          </View>
 
-        <ScrollView contentContainerStyle={styles.form}>
-          <Text style={styles.label}>Amount</Text>
+          <ScrollView contentContainerStyle={styles.form}>
+            <Text style={styles.label}>Amount</Text>
 
             <FormInput
               value={amount}
@@ -264,134 +273,135 @@ const AddTransaction: React.FC = () => {
               placeholder="Enter amount (€)"
             />
 
-          {type === 'expense' && (
-            <>
-              <Text style={styles.label}>Category</Text>
-              <TouchableOpacity
-                style={[styles.dropdown, { backgroundColor: category ? categoryColors[category] : '#fff' }]}
-                onPress={() => setCategoryOpen(!isCategoryOpen)}
-              >
-                <Text style={{ color: category ? 'white' : '#888', fontWeight: '600' }}>
-                  {category || 'Select category'}
-                </Text>
-              </TouchableOpacity>
-              {isCategoryOpen && (
-                <View style={styles.dropdownList}>
-                  {expenseCategories.map((cat) => (
-                    <TouchableOpacity
-                      key={cat}
-                      style={[styles.dropdownItem, { backgroundColor: categoryColors[cat] || '#ccc' }]}
-                      onPress={() => {
-                        setCategory(cat);
-                        setCategoryOpen(false);
+            {type === 'expense' && (
+              <>
+                <Text style={styles.label}>Category</Text>
+                <TouchableOpacity
+                  style={[styles.dropdown, { backgroundColor: category ? categoryColors[category] : '#fff' }]}
+                  onPress={() => setCategoryOpen(!isCategoryOpen)}
+                >
+                  <Text style={{ color: category ? 'white' : '#888', fontWeight: '600' }}>
+                    {category || 'Select category'}
+                  </Text>
+                </TouchableOpacity>
+                {isCategoryOpen && (
+                  <View style={styles.dropdownList}>
+                    {expenseCategories.map((cat) => (
+                      <TouchableOpacity
+                        key={cat}
+                        style={[styles.dropdownItem, { backgroundColor: categoryColors[cat] || '#ccc' }]}
+                        onPress={() => {
+                          setCategory(cat);
+                          setCategoryOpen(false);
+                        }}
+                      >
+                        <Text style={{ color: 'white', fontWeight: '600' }}>{cat}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+
+                <Text style={styles.label}>Payment Type</Text>
+                <TouchableOpacity style={styles.dropdown} onPress={() => setPaymentOpen(!isPaymentOpen)}>
+                  <Text style={{ color: paymentType ? '#000' : '#888', fontWeight: '600' }}>
+                    {paymentType || 'Select payment method'}
+                  </Text>
+                </TouchableOpacity>
+                {isPaymentOpen && (
+                  <View style={styles.dropdownList}>
+                    {paymentOptions.map((opt) => (
+                      <TouchableOpacity
+                        key={opt}
+                        style={[styles.dropdownItem, { backgroundColor: '#518e59ff' }]}
+                        onPress={() => {
+                          setPaymentType(opt);
+                          setPaymentOpen(false);
+                        }}
+                      >
+                        <Text style={{ color: 'white', fontWeight: '600' }}>{opt}</Text>
+                      </TouchableOpacity>
+
+                    ))}
+                  </View>
+                )}
+
+                <Text style={styles.label}>Due date</Text>
+
+                {Platform.OS === 'web' ? (
+                  <View style={styles.webDateWrapper}>
+                    <input
+                      type="date"
+                      value={dueDate ? dueDate.toISOString().slice(0, 10) : ''}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (!v) return setDueDate(null);
+                        const [y, m, d] = v.split('-').map(Number);
+                        setDueDate(new Date(y, m - 1, d));
                       }}
-                    >
-                      <Text style={{ color: 'white', fontWeight: '600' }}>{cat}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-
-              <Text style={styles.label}>Payment Type</Text>
-              <TouchableOpacity style={styles.dropdown} onPress={() => setPaymentOpen(!isPaymentOpen)}>
-                <Text style={{ color: paymentType ? '#000' : '#888', fontWeight: '600' }}>
-                  {paymentType || 'Select payment method'}
-                </Text>
-              </TouchableOpacity>
-              {isPaymentOpen && (
-                <View style={styles.dropdownList}>
-                  {paymentOptions.map((opt) => (
-                    <TouchableOpacity
-                      key={opt}
-                      style={[styles.dropdownItem, { backgroundColor: '#518e59ff' }]}
-                      onPress={() => {
-                        setPaymentType(opt);
-                        setPaymentOpen(false);
-                      }}
-                    >
-                      <Text style={{ color: 'white', fontWeight: '600' }}>{opt}</Text>
-                    </TouchableOpacity>
-              
-                  ))}
-                </View>
-              )}
-
-              <Text style={styles.label}>Due date</Text>
-
-              {Platform.OS === 'web' ? (
-                <View style={styles.webDateWrapper}>
-                  <input
-                    type="date"
-                    value={dueDate ? dueDate.toISOString().slice(0, 10) : ''}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      if (!v) return setDueDate(null);
-                      const [y, m, d] = v.split('-').map(Number);
-                      setDueDate(new Date(y, m - 1, d));
-                    }}
-                    style={styles.webDateInput as any}
-                  />
-                </View>
-              ) : (
-                <>
-                  <TouchableOpacity
-                    style={styles.dropdown}
-                    onPress={() => setShowDuePicker(true)}
-                  >
-                    <Text style={{ color: dueDate ? '#000' : '#888', fontWeight: '600' }}>
-                      {dueDate ? dueDate.toDateString() : 'Select due date'}
-                    </Text>
-                  </TouchableOpacity>
-
-                  {showDuePicker && (
-                    <View style={styles.iosPickerContainer}>
-                    <DateTimePicker
-                      value={dueDate ?? new Date()}
-                      mode="date"
-                      display="spinner"
-                      onChange={(event, selectedDate) => {
-                        setShowDuePicker(false);
-                        if ((event as any)?.type === 'dismissed') return;
-                        if (selectedDate) setDueDate(selectedDate);
-                      }}
+                      style={styles.webDateInput as any}
                     />
-                    </View>
-                  )}
-                </>
-              )}
+                  </View>
+                ) : (
+                  <>
+                    <TouchableOpacity
+                      style={styles.dropdown}
+                      onPress={() => setShowDuePicker(true)}
+                    >
+                      <Text style={{ color: dueDate ? '#000' : '#888', fontWeight: '600' }}>
+                        {dueDate ? dueDate.toDateString() : 'Select due date'}
+                      </Text>
+                    </TouchableOpacity>
+
+                    {showDuePicker && (
+                      <View style={styles.iosPickerContainer}>
+                        <DateTimePicker
+                          value={dueDate ?? new Date()}
+                          mode="date"
+                          display="spinner"
+                          onChange={(event, selectedDate) => {
+                            setShowDuePicker(false);
+                            if ((event as any)?.type === 'dismissed') return;
+                            if (selectedDate) setDueDate(selectedDate);
+                          }}
+                        />
+                      </View>
+                    )}
+                  </>
+                )}
 
 
-              <Text style={styles.label}>Note</Text>
-              <FormInput value={note} onChangeText={setNote} placeholder="Enter note" />
-              <Text style={styles.label}>Payee Name</Text>
-              <FormInput value={payeeName} onChangeText={setPayeeName} placeholder="Enter payee name" />
-            </>
-          )}
+                <Text style={styles.label}>Note</Text>
+                <FormInput value={note} onChangeText={setNote} placeholder="Enter note" />
+                <Text style={styles.label}>Payee Name</Text>
+                <FormInput value={payeeName} onChangeText={setPayeeName} placeholder="Enter payee name" />
+              </>
+            )}
 
-          <Pressable
-            onPress={handleSave}
-            style={{
-              backgroundColor: "#34aac7",
-              padding: 12,
-              borderRadius: 8,
-              alignItems: "center",
-              marginTop: 20,
-            }}
-          >
-            <Text style={{ color: "white", fontSize: 16, fontWeight: 'bold'}}>
-              Save Transaction
-            </Text>
-          </Pressable>
+            <Pressable
+              onPress={handleSave}
+              style={{
+                backgroundColor: "#34aac7",
+                padding: 12,
+                borderRadius: 8,
+                alignItems: "center",
+                marginTop: 20,
+              }}
+            >
+              <Text style={{ color: "white", fontSize: 16, fontWeight: 'bold' }}>
+                Save Transaction
+              </Text>
+            </Pressable>
 
-        </ScrollView>
-      </View>
+          </ScrollView>
+        </View>
 
-      <StatusModal
-        visible={successModalVisible}
-        message={successMessage}
-        type={statusType}
-      />
-    </SafeAreaView>
+        <StatusModal
+          visible={successModalVisible}
+          message={successMessage}
+          type={statusType}
+        />
+      </SafeAreaView>
+    </Animated.View>
   );
 };
 
@@ -453,46 +463,44 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ccc'
   },
-   webDateWrapper: {
-  position: 'relative',
-  width: '100%',
-},
-webDateIcon: {
-  position: 'absolute',
-  right: 12,
-  top: '50%',
-  transform: [{ translateY: -10 }],
-  pointerEvents: 'none',
-},
+  webDateWrapper: {
+    position: 'relative',
+    width: '100%',
+  },
+  webDateIcon: {
+    position: 'absolute',
+    right: 12,
+    top: '50%',
+    transform: [{ translateY: -10 }],
+    pointerEvents: 'none',
+  },
 
-webDateInput: {
-  width: '100%',
-  height: 48,               
-  paddingLeft: 14,
-  paddingRight: 42,    
-  borderRadius: 8,
-  borderWidth: 1,
-  borderColor: '#ccc',
-  fontSize: 16,
-  backgroundColor: '#fff',
+  webDateInput: {
+    width: '100%',
+    height: 48,
+    paddingLeft: 14,
+    paddingRight: 42,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    fontSize: 16,
+    backgroundColor: '#fff',
 
-  // @ts-ignore
-  boxSizing: 'border-box',
-  // @ts-ignore
-  appearance: 'none',
-  WebkitAppearance: 'none',
-},
-iosPickerContainer: {
-  marginTop: 8,
-  backgroundColor: '#888',
-  borderRadius: 12,
-  paddingVertical: 8,
-  paddingHorizontal: 6,
-  borderWidth: 1,
-  borderColor: '#ddd',
-},
-
-
+    // @ts-ignore
+    boxSizing: 'border-box',
+    // @ts-ignore
+    appearance: 'none',
+    WebkitAppearance: 'none',
+  },
+  iosPickerContainer: {
+    marginTop: 8,
+    backgroundColor: '#888',
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 6,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
 
 });
 

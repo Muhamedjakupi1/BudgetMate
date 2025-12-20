@@ -1,5 +1,4 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
@@ -46,7 +45,7 @@ export default function TabLayout() {
           },
           tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
           tabBarInactiveTintColor: '#999',
-          tabBarIcon: ({ focused, color, size }) => {
+          tabBarIcon: ({ focused, color}) => {
             let iconName: any;
             if (route.name === 'index') iconName = focused ? 'home' : 'home-outline';
             else if (route.name === 'transaction') iconName = focused ? 'swap-horizontal' : 'swap-horizontal-outline';

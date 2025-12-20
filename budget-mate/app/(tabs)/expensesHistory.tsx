@@ -1,4 +1,4 @@
-import React, {  useState, useCallback } from "react";
+import {  useState, useCallback } from "react";
 import { View, Text, FlatList, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "expo-router";
@@ -6,12 +6,16 @@ import { collection, query, onSnapshot,serverTimestamp, getDocs, where, limit, a
 import { db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 import { Ionicons } from '@expo/vector-icons';
+import { useTabAnimation } from "../hooks/tabAnimation";
+import { Animated } from "react-native";
 
 
 export default function ExpensesHistory() {
   const { user } = useAuth();
   const [expenses, setExpenses] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
+
+  const { opacity, scale } = useTabAnimation();
 
   const createWeeklySummaryIfMissing = async (totalAmount: number) => {
     if (!user) return;
@@ -68,6 +72,13 @@ export default function ExpensesHistory() {
   );
 
   return (
+     <Animated.View
+      style={{
+        flex: 1,
+        opacity,
+        transform: [{ scale }],
+      }}
+    >
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>
         <Ionicons name="checkmark-done-outline" size={24} color="green" /> 
@@ -107,6 +118,7 @@ export default function ExpensesHistory() {
         )}
       </View>
     </SafeAreaView>
+    </Animated.View>
   );
 }
 
@@ -119,10 +131,12 @@ const styles = StyleSheet.create({
   title: { 
     fontSize: 24, 
     fontWeight: "bold", 
-    textAlign: "center", 
-    marginVertical: 20 },
+    marginBottom: 20,
+    color: "#333"
+  },
   contentContainer: { 
-    flex: 1 },
+    flex: 1
+   },
   noExpenses: { 
     fontSize: 16, 
     textAlign: "center", 
