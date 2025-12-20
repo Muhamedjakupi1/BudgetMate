@@ -1,10 +1,31 @@
-import React from "react";
-import { View, Text, Image, TouchableOpacity, StyleSheet, StatusBar } from "react-native";
+import React , { useEffect, useRef } from "react";
+import { Text, TouchableOpacity, StyleSheet, StatusBar, Animated, View } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Image } from "expo-image";
+
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const scale = useRef(new Animated.Value(0.7)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 450,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scale, {
+        toValue: 1,
+        friction: 6,
+        tension: 120,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -16,14 +37,24 @@ export default function WelcomeScreen() {
 
       <Text style={styles.subtitle}>Smart savings, made simple.</Text>
 
-      <Image
-        source={require("../../assets/images/budgetmate-logo.png")} 
-        style={{ width: 120, height: 120, marginBottom: 30 }}
-      />
+      <Animated.View
+        style={{
+          marginBottom: 30,
+          opacity,
+          transform: [{ scale }],
+        }}
+      >
+        <Image
+          source={require("../../assets/images/budgetmate-logo.png")}
+          style={{ width: 120, height: 120 }}
+          contentFit="contain"
+          transition={150}
+        />
+      </Animated.View>
 
       <TouchableOpacity
         style={styles.signupButton}
-        onPress={() => router.replace("/(auth)/signup")}
+        onPress={() => router.push("/(auth)/signup")}
       >
         <Text style={styles.signupText}>Sign Up</Text>
       </TouchableOpacity>

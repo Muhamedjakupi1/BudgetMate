@@ -22,7 +22,7 @@ export const AuthProvider = ({ children }) => {
             if (!fbUser) {
                 setUser(null);
                 setLoading(false);
-                router.replace("/(auth)/signin");
+                router.replace("/(auth)");
                 return;
             }
 
@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }) => {
     const logout = async () => {
         try {
             await signOut(auth);
-            router.replace('/(auth)/signin');
+            router.replace('/(auth)');
         } catch (error) {
             console.error("Error signing out: ", error);
         }

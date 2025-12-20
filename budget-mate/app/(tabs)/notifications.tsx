@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { View, Text, FlatList, StyleSheet, Alert } from "react-native";
+import  { useCallback, useEffect, useState, useRef, memo } from "react";
+import { View, Text, FlatList, StyleSheet, Alert, Animated } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as Notifications from "expo-notifications";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "expo-router";
 import { collection, query, orderBy, onSnapshot, deleteDoc, doc } from "firebase/firestore";
 
 import { useAuth } from "../../context/AuthContext";
@@ -17,16 +18,11 @@ type NotifType =
   | "follow_up"
   | "profile_setup";
 
-type NotifChannel = "push" | "in_app";
-
 type FirestoreNotif = {
   id: string; 
   type: NotifType;
-  channel: NotifChannel;
-
   title: string;
   body: string;
-
   scheduledAt?: Date;         
   createdAt?: Date;           
   expoNotificationId?: string; 
@@ -71,9 +67,107 @@ function labelForType(type: NotifType) {
   }
 }
 
+const NotifRow = memo(function NotifRow({
+  item,
+  cancelNotif,
+  registerOut,
+}: {
+  item: FirestoreNotif;
+  cancelNotif: (notificationId: string, itemId: string) => Promise<void>;
+  registerOut: (id: string, fn: () => Promise<void>) => void;
+}) {
+
+  const anim = useRef(new Animated.Value(1)).current; 
+
+  useEffect(() => {
+    registerOut(item.id, () => {
+      return new Promise<void>((resolve) => {
+        Animated.timing(anim, {
+          toValue: 0,
+          duration: 220,
+          useNativeDriver: true,
+        }).start(() => resolve());
+      });
+    });
+  }, [item.id, registerOut]);
+
+  const shownDate = item.scheduledAt ?? item.createdAt;
+  const cancelId =  item.id;
+
+  return (
+    <Animated.View
+      style={{
+        opacity: anim.interpolate({ inputRange: [0, 1], outputRange: [0, item.read ? 0.7 : 1] }),
+        transform: [
+          {
+            translateX: anim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [-16, 0],
+            }),
+          },
+          {
+            scale: anim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0.98, 1],
+            }),
+          },
+        ],
+      }}
+    >
+      <View style={styles.typeRow}>
+        <Ionicons name={iconForType(item.type)} size={16} color="#555" />
+        <Text style={styles.typeText}>{labelForType(item.type)}</Text>
+        <View style={styles.dot} />
+      </View>
+
+      <NotifCard
+        item={{
+          taskTitle: item.title,
+          body: item.body,
+          scheduledAt: shownDate,
+          notificationId: cancelId,
+        }}
+        cancel={(id: string) => cancelNotif(id, item.id)}
+      />
+    </Animated.View>
+  );
+});
+
 export default function NotificationsScreen() {
   const { user } = useAuth();
   const [notifList, setNotifList] = useState<FirestoreNotif[]>([]);
+
+  const listOpacity = useRef(new Animated.Value(0)).current;
+  const listScale = useRef(new Animated.Value(0.96)).current;
+
+  const outAnimMap = useRef(new Map<string, () => Promise<void>>()).current;
+
+  const registerOut = useCallback((id: string, fn: () => Promise<void>) => {
+    outAnimMap.set(id, fn);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      listOpacity.stopAnimation();
+      listScale.stopAnimation();
+
+      listOpacity.setValue(0);
+      listScale.setValue(0.96);
+
+      Animated.parallel([
+        Animated.timing(listOpacity, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+        Animated.timing(listScale, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, [listOpacity, listScale])
+  );
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -90,7 +184,6 @@ export default function NotificationsScreen() {
             const data = docSnap.data() as any;
 
             const type = data.type as NotifType | undefined;
-            const channel = (data.channel as NotifChannel | undefined) ?? "in_app";
             if (!type) return null;
 
             const allowed: NotifType[] = [
@@ -106,7 +199,6 @@ export default function NotificationsScreen() {
             return {
               id: docSnap.id,
               type,
-              channel,
               title: data.title ?? data.taskTitle ?? "Notification",
               body: data.body ?? "",
               scheduledAt: data.scheduledAt?.toDate?.() ?? undefined,
@@ -126,12 +218,11 @@ export default function NotificationsScreen() {
   }, [user?.uid]);
 
   const cancelNotif = useCallback(
-    async (notificationId: string) => {
+    async ( itemId: string) => {
       if (!user?.uid) return;
 
-      const item = notifList.find(
-        (n) => n.expoNotificationId === notificationId || n.id === notificationId
-      );
+      const item = notifList.find((n) => n.id === itemId);
+
 
       if (!item) {
         Alert.alert("Error", "Notification not found.");
@@ -139,15 +230,16 @@ export default function NotificationsScreen() {
       }
 
       try {
-        if (item.channel === "push") {
-          if (item.expoNotificationId) {
-            await Notifications.cancelScheduledNotificationAsync(item.expoNotificationId);
-          } else {
-              console.warn(
-                  "Push notification has no expoNotificationId. Cannot cancel scheduled notification."
-              );
-          }
+
+        const animateOut = outAnimMap.get(itemId);
+        if (animateOut) await animateOut();
+
+        if (item.expoNotificationId) {
+          await Notifications.cancelScheduledNotificationAsync(
+            item.expoNotificationId
+          );
         }
+
         await deleteDoc(doc(db, "users", user.uid, "notifications", item.id));
       } catch (e) {
         Alert.alert("Error", "Failed to remove notification.");
@@ -157,35 +249,10 @@ export default function NotificationsScreen() {
   );
 
   const renderItem = useCallback(
-    ({ item }: { item: FirestoreNotif }) => {
-      const shownDate = item.scheduledAt ?? item.createdAt;
-
-      const cancelId = item.channel === "push" ? item.expoNotificationId ?? item.id : item.id;
-
-      return (
-        <View style={{ opacity: item.read ? 0.7 : 1 }}>
-          <View style={styles.typeRow}>
-            <Ionicons name={iconForType(item.type)} size={16} color="#555" />
-            <Text style={styles.typeText}>{labelForType(item.type)}</Text>
-            <View style={styles.dot} />
-            <Text style={styles.typeText}>
-              {item.channel === "push" ? "Outside app" : "In app"}
-            </Text>
-          </View>
-
-          <NotifCard
-            item={{
-              taskTitle: item.title,
-              body: item.body,
-              scheduledAt: shownDate,
-              notificationId: cancelId,
-            }}
-            cancel={cancelNotif}
-          />
-        </View>
-      );
-    },
-    [cancelNotif]
+    ({ item }: { item: FirestoreNotif }) => (
+       <NotifRow item={item} cancelNotif={cancelNotif} registerOut={registerOut} />
+    ),
+    [cancelNotif, registerOut]
   );
 
   return (
@@ -196,40 +263,50 @@ export default function NotificationsScreen() {
           <Text style={styles.title}>Notifications</Text>
         </View>
 
-        <FlatList
-          data={notifList}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          initialNumToRender={8}
-          maxToRenderPerBatch={8}
-          contentContainerStyle={notifList.length === 0 ? styles.emptyWrap : undefined}
-          ListEmptyComponent={<Text style={styles.empty}>No notifications</Text>}
-        />
+        <Animated.View
+          style={{
+            flex: 1,
+            opacity: listOpacity,
+            transform: [{ scale: listScale }],
+          }}
+        >
+          <FlatList
+            data={notifList}
+            keyExtractor={(item) => item.id}
+            renderItem={renderItem}
+            initialNumToRender={8}
+            maxToRenderPerBatch={8}
+            contentContainerStyle={notifList.length === 0 ? styles.emptyWrap : undefined}
+            ListEmptyComponent={<Text style={styles.empty}>No notifications</Text>}
+          />
+        </Animated.View>
       </View>
     </SafeAreaView>
   );
+
 }
 
 const styles = StyleSheet.create({
-  safeArea: { 
-    flex: 1, 
-    backgroundColor: "#f7f7f7" },
-  container: { 
-    flex: 1, 
-    padding: 16, 
-    backgroundColor: "#fff" },
-
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#fff"
+  },
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: "#fff"
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
     marginBottom: 12,
   },
-  title: { 
-    fontSize: 22, 
-    fontWeight: "800", 
-    color: "#111" },
-
+  title: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#111"
+  },
   typeRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -237,21 +314,24 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     marginLeft: 4,
   },
-  typeText: { 
-    fontSize: 12, 
-    fontWeight: "700", 
-    color: "#555" },
-  dot: { 
-    width: 4, 
-    height: 4, 
-    borderRadius: 2, 
-    backgroundColor: "#aaa", 
-    marginHorizontal: 4 },
-
-  emptyWrap: { 
-    flexGrow: 1, 
-    justifyContent: "center" },
-  empty: { 
-    color: "#777", 
-    textAlign: "center" },
+  typeText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#555"
+  },
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#aaa",
+    marginHorizontal: 4
+  },
+  emptyWrap: {
+    flexGrow: 1,
+    justifyContent: "center"
+  },
+  empty: {
+    color: "#777",
+    textAlign: "center"
+  },
 });
