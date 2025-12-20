@@ -103,6 +103,22 @@ describe('Button Visibility', ()=>{
       fireEvent.press(getByText('OK'));
       expect(mockOnClose).toHaveBeenCalledTimes(1);
     });
+
+    it('calls onClose when Cancel button is pressed', () => {
+      const { getByText } = render(
+        <ConfirmModal
+          visible={true}
+          message="Test message"
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          showConfirm={true}
+        />
+      );
+
+      fireEvent.press(getByText('Cancel'));
+      expect(mockOnClose).toHaveBeenCalledTimes(1);
+      expect(mockOnConfirm).not.toHaveBeenCalled();
+    });
   });
 
   
