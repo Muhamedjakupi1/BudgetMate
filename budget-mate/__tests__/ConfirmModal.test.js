@@ -166,14 +166,31 @@ describe('Button Visibility', ()=>{
       expect(getByText('Operation failed')).toBeTruthy();
     });
   });
-
+  
     describe('Confirm Button Scenarios', () => {
-    it('handles confirm with success type', () => {
+     it('handles confirm with success type', () => {
       const { getByText } = render(
         <ConfirmModal
           visible={true}
           type="success"
           message="Delete this item?"
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          showConfirm={true}
+        />
+      );
+
+      fireEvent.press(getByText('Confirm'));
+      expect(mockOnConfirm).toHaveBeenCalled();
+      expect(mockOnClose).toHaveBeenCalled();
+    });
+
+    it('handles confirm with error type', () => {
+      const { getByText } = render(
+        <ConfirmModal
+          visible={true}
+          type="error"
+          message="Retry the operation?"
           onClose={mockOnClose}
           onConfirm={mockOnConfirm}
           showConfirm={true}
