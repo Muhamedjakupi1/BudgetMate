@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import AnimatedPressButton from "../../components/ui/animatedButton";
+import AnimatedText from "../../components/ui/animatedLetters";
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -26,15 +27,19 @@ export default function WelcomeScreen() {
     ]).start();
   }, []);
 
-
   return (
+    
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="white"></StatusBar>
-      <Text style={styles.title}>
-        <Text style={styles.titleBlue}>Budget</Text>
-        <Text style={styles.titleGreen}>Mate</Text>
-      </Text>
 
+      <AnimatedText
+        text="BudgetMate"
+        containerStyle={{ marginBottom: 8 }}
+        letterStyle={{ fontSize: 32, fontWeight: "bold" }}
+        perCharStyle={(ch, i) => (i < 6 ? { color: "#0d1b2a" } : { color: "#3DBA6F" })}
+        delayPerChar={50}
+        fromY={10}
+      />
       <Text style={styles.subtitle}>Smart savings, made simple.</Text>
 
       <Animated.View
