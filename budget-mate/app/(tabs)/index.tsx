@@ -170,13 +170,16 @@ export default function HomePage() {
 
       const dueDate = soonest.dueDate;
 
-      const twoHoursBefore = new Date(dueDate.getTime() - 2 * 60 * 60 * 1000);
+      const dueDateWithTime = new Date(dueDate);
+      dueDateWithTime.setHours(12, 0, 0, 0);
+      const twoHoursBefore = new Date(dueDateWithTime.getTime() - 2 * 60 * 60 * 1000);
+
       const scheduledAt =
         twoHoursBefore.getTime() > now.getTime()
           ? twoHoursBefore
-          : new Date(now.getTime() + 5 * 60 * 1000);
+          : new Date(now.getTime()+ 5 * 1000);
 
-      const dedupeKey = `bill_reminder:${soonest.id}:${dueDate.toISOString()}`;
+      const dedupeKey = `bill_reminder:${soonest.id}:${dueDateWithTime.toISOString()}`;
 
       const existsSnap = await getDocs(
         query(
