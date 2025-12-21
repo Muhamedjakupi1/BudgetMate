@@ -20,10 +20,17 @@ export default function ExpensesHistory() {
   const createWeeklySummaryIfMissing = async (totalAmount: number) => {
     if (!user) return;
 
-    const startOfWeek = new Date();
-    startOfWeek.setDate(startOfWeek.getDate() - 7);
+    function startOfWeekMonday(d: Date) {
+      const x = new Date(d);
+      x.setHours(0, 0, 0, 0);
+      const day = x.getDay(); 
+      const diff = (day === 0 ? -6 : 1) - day; 
+      x.setDate(x.getDate() + diff);
+      return x;
+    }
 
-    const dedupeKey = `summary:week:${startOfWeek.toISOString().slice(0, 10)}`;
+    const weekStart = startOfWeekMonday(new Date());
+    const dedupeKey = `summary:week:${weekStart.toISOString().slice(0, 10)}`;
 
     const notifsRef = collection(db, "users", user.uid, "notifications");
     const existing = await getDocs(
@@ -80,10 +87,10 @@ export default function ExpensesHistory() {
       }}
     >
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>
-        <Ionicons name="checkmark-done-outline" size={24} color="green" /> 
-        <View style={{ width: 8 }} />
-        Expenses History</Text>
+        <View style={styles.titleRow}>
+          <Ionicons name="checkmark-done-outline" size={24} color="green" />
+          <Text style={styles.title}>Expenses History</Text>
+        </View>
       <View style={styles.contentContainer}>
         {expenses.length === 0 ? (
           <Text style={styles.noExpenses}>No expenses done yet</Text>
@@ -171,5 +178,12 @@ const styles = StyleSheet.create({
   },
   rightColumn: { 
     alignItems: "flex-end", 
-    justifyContent: "space-between" },
+    justifyContent: "space-between" 
+  },
+  titleRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 8,
+  marginBottom: 20,
+},
 });

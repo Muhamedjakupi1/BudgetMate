@@ -90,6 +90,12 @@ async function createNotificationIfNotExists(params: {
   });
 }
 
+async function notificationExists(uid: string, dedupeKey: string) {
+  const notifRef = collection(db, "users", uid, "notifications");
+  const snap = await getDocs(query(notifRef, where("dedupeKey", "==", dedupeKey), limit(1)));
+  return !snap.empty;
+}
+
 function startOfDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
@@ -168,7 +174,14 @@ export default function HomePage() {
           ? twoHoursBefore
           : new Date(now.getTime() + 5 * 60 * 1000);
 
-        const dedupeKey = `bill_reminder:${startOfDay(dueDate).toISOString()}`;
+        const dedupeKey = `bill_reminder:${soonest.id}:${dueDate.toISOString()}`;
+        const already = await notificationExists(user.uid, dedupeKey);
+
+        if (!already) {
+          const seconds = Math.max(
+            5,
+            Math.floor((scheduledAt.getTime() - Date.now()) / 1000)
+          );
 
         const expoId = await Notifications.scheduleNotificationAsync({
           content: {
@@ -176,7 +189,7 @@ export default function HomePage() {
             body: `You have ${dueSoon.length} bill(s) due soon.`,
             sound: true,
           },
-          trigger: { seconds: Math.max(5, Math.floor((scheduledAt.getTime() - Date.now()) / 1000)), repeats: false } as any,
+          trigger: { seconds, channelId: "default" } as any,
         });
 
         await createNotificationIfNotExists({
@@ -191,6 +204,8 @@ export default function HomePage() {
           meta: { count: dueSoon.length, soonestDue: dueDate.toISOString() },
         });
       }
+    }
+
 
       const dayKey = startOfDay(now).toISOString();
       const spentToday = trans

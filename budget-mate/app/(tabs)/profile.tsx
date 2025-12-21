@@ -98,12 +98,11 @@ const Profile = () => {
   const userEmail = currentUser.email || 'No Email';
   const userPhoto = currentUser.image || null;
 
-  if (!currentUser) {
-    useEffect(() => {
-      router.replace('/(auth)');
-    }, []);
-    return null;
-  }
+  useEffect(() => {
+    if (!currentUser) router.replace("/(auth)");
+  }, [currentUser]);
+
+  if (!currentUser) return null;
 
   const showModal = (type: 'success' | 'error', message: string) => {
     setModalType(type);
