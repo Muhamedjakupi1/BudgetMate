@@ -90,12 +90,6 @@ async function createNotificationIfNotExists(params: {
   });
 }
 
-async function notificationExists(uid: string, dedupeKey: string) {
-  const notifRef = collection(db, "users", uid, "notifications");
-  const snap = await getDocs(query(notifRef, where("dedupeKey", "==", dedupeKey), limit(1)));
-  return !snap.empty;
-}
-
 function startOfDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
@@ -122,127 +116,120 @@ export default function HomePage() {
   const [statusMessage, setStatusMessage] = useState("");
   const router = useRouter();
   const { opacity, scale } = useTabAnimation();
+  
   useEffect(() => {
-    if (!user) return;
+  if (!user?.uid) return;
 
-    const q = query(collection(db, "users", user.uid, "transactions"));
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const trans: Transaction[] = [];
-      let totalBalance = 0;
+  const q = query(collection(db, "users", user.uid, "transactions"));
 
-      snapshot.forEach((doc) => {
-        const data = doc.data() as Transaction;
-        trans.push({
-          id: doc.id,
-          type: data.type,
-          amount: data.amount,
-          category: data.category,
-          done: data.done,
-          note: data.note,
-          paymentType: data.paymentType,
-          payeeName: data.payeeName,
-          date: data.date,
-          dueDate: data.dueDate,
-          isExternalApi: false,
-        });
-        if (data.type === "income") totalBalance += data.amount;
-        if (data.type === "expense" && data.done) totalBalance -= data.amount;
-      });
-      setFirebaseTransactions(trans);
-      setBalance(totalBalance);
+  const unsubscribe = onSnapshot(q, async (snapshot) => {
+    const trans: Transaction[] = [];
+    let totalBalance = 0;
 
-      const now = new Date();
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data() as any;
 
-      const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-      const dueSoon = trans.filter(
-        (t) =>
-          t.type === "expense" &&
-          !t.done &&
-          !!t.dueDate &&
-          new Date(t.dueDate as any) <= in24h
-      );
+      const txn: Transaction = {
+        id: docSnap.id,
+        type: data.type,
+        amount: Number(data.amount) || 0,
+        category: data.category ?? null,
+        done: !!data.done,
+        note: data.note ?? "",
+        paymentType: data.paymentType ?? "",
+        payeeName: data.payeeName ?? "",
+        date: data.date?.toDate?.() ?? null,
+        dueDate: data.dueDate?.toDate?.() ?? null,
+        isExternalApi: false,
+      };
 
-      if (dueSoon.length > 0) {
-        const soonest = dueSoon
-          .slice()
-          .sort((a, b) => new Date(a.dueDate as any).getTime() - new Date(b.dueDate as any).getTime())[0];
+      trans.push(txn);
 
-        const dueDate = new Date(soonest.dueDate as any);
+      if (txn.type === "income") totalBalance += txn.amount;
+      if (txn.type === "expense" && txn.done) totalBalance -= txn.amount;
+    });
 
-        const twoHoursBefore = new Date(dueDate.getTime() - 2 * 60 * 60 * 1000);
-        const scheduledAt = twoHoursBefore.getTime() > now.getTime()
+    setFirebaseTransactions(trans);
+    setBalance(totalBalance);
+
+    const now = new Date();
+    const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+    const dueSoon = trans.filter(
+      (t): t is Transaction & { dueDate: Date } =>
+        t.type === "expense" &&
+        !t.done &&
+        t.dueDate instanceof Date &&
+        t.dueDate.getTime() <= in24h.getTime()
+    );
+
+    if (dueSoon.length > 0) {
+      const soonest = dueSoon
+        .slice()
+        .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())[0];
+
+      const dueDate = soonest.dueDate;
+
+      const twoHoursBefore = new Date(dueDate.getTime() - 2 * 60 * 60 * 1000);
+      const scheduledAt =
+        twoHoursBefore.getTime() > now.getTime()
           ? twoHoursBefore
           : new Date(now.getTime() + 5 * 60 * 1000);
 
-        const dedupeKey = `bill_reminder:${soonest.id}:${dueDate.toISOString()}`;
-        const already = await notificationExists(user.uid, dedupeKey);
+      const dedupeKey = `bill_reminder:${soonest.id}:${dueDate.toISOString()}`;
 
-        if (!already) {
+      const existsSnap = await getDocs(
+        query(
+          collection(db, "users", user.uid, "notifications"),
+          where("dedupeKey", "==", dedupeKey),
+          limit(1)
+        )
+      );
+
+      if (existsSnap.empty) {
+        let expoId: string | undefined;
+
+        try {
+          const perm = await Notifications.getPermissionsAsync();
+          if (!perm.granted) {
+            const req = await Notifications.requestPermissionsAsync();
+            if (!req.granted) throw new Error("Notification permission not granted");
+          }
+
           const seconds = Math.max(
             5,
             Math.floor((scheduledAt.getTime() - Date.now()) / 1000)
           );
 
-        const expoId = await Notifications.scheduleNotificationAsync({
-          content: {
-            title: "Bill reminder",
-            body: `You have ${dueSoon.length} bill(s) due soon.`,
-            sound: true,
-          },
-          trigger: { seconds, channelId: "default" } as any,
-        });
+          expoId = await Notifications.scheduleNotificationAsync({
+            content: {
+              title: "Bill reminder",
+              body: `You have ${dueSoon.length} bill(s) due soon.`,
+              sound: true,
+            },
+            trigger: { seconds, repeats: false } as any,
+          });
+        } catch {}
 
-        await createNotificationIfNotExists({
-          uid: user.uid,
+        await addDoc(collection(db, "users", user.uid, "notifications"), {
           type: "bill_reminder",
-          channel: "push",
+          channel: expoId ? "push" : "in_app",
           title: "Bill reminder",
           body: `You have ${dueSoon.length} bill(s) due soon.`,
           dedupeKey,
-          scheduledAt,
-          expoNotificationId: expoId,
+          createdAt: serverTimestamp(),
+          scheduledAt: Timestamp.fromDate(scheduledAt),
+          expoNotificationId: expoId ?? null,
+          read: false,
+          status: "active",
           meta: { count: dueSoon.length, soonestDue: dueDate.toISOString() },
         });
       }
     }
+  });
 
-
-      const dayKey = startOfDay(now).toISOString();
-      const spentToday = trans
-        .filter((t) => t.type === "expense" && t.done && t.date && new Date(t.date as any) >= startOfDay(now))
-        .reduce((sum, t) => sum + (t.amount || 0), 0);
-
-      await createNotificationIfNotExists({
-        uid: user.uid,
-        type: "summary",
-        channel: "in_app",
-        title: "Daily summary",
-        body: `Today you spent €${spentToday.toFixed(2)}.`,
-        dedupeKey: `summary:day:${dayKey}`,
-        meta: { spentToday },
-      });
-
-      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      const spent7d = trans
-        .filter((t) => t.type === "expense" && t.done && t.date && new Date(t.date as any) >= sevenDaysAgo)
-        .reduce((sum, t) => sum + (t.amount || 0), 0);
-
-      const UNUSUAL_THRESHOLD = 200;
-      if (spent7d > UNUSUAL_THRESHOLD) {
-        await createNotificationIfNotExists({
-          uid: user.uid,
-          type: "unusual_spending",
-          channel: "in_app",
-          title: "Unusual spending detected",
-          body: `You spent €${spent7d.toFixed(2)} in the last 7 days.`,
-          dedupeKey: `unusual_spending:${weekKey(now)}`,
-          meta: { spent7d, threshold: UNUSUAL_THRESHOLD },
-        });
-      }
-    });
-
-    return () => unsubscribe();
-  }, [user]);
+  return () => unsubscribe();
+}, [user?.uid]);
 
   const addRandomTransactions = async () => {
     setLoading(true);
