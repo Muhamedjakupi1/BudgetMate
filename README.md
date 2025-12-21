@@ -109,5 +109,6 @@ cd budget-mate
 2. Run command:
 ```bash
 npm install
+npx expo start
 ```
 Thank you for using BudgetMate! Enjoy managing your finances 😊
