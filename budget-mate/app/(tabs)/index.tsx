@@ -1,5 +1,5 @@
 import { useEffect, useState, memo, useCallback } from "react";
-import { FlatList, StatusBar, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from "react-native";
+import { FlatList, StatusBar, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Platform } from "react-native";
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../context/AuthContext";
@@ -94,14 +94,17 @@ function startOfDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
-function weekKey(d: Date) {
-  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  const dayNum = date.getUTCDay() || 7;
-  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-  const weekNo = Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-  return `${date.getUTCFullYear()}-W${weekNo}`;
-}
+useEffect(() => {
+  (async () => {
+    if (Platform.OS === "android") {
+      await Notifications.setNotificationChannelAsync("default", {
+        name: "default",
+        importance: Notifications.AndroidImportance.MAX,
+      });
+    }
+  })();
+}, []);
+
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -116,6 +119,7 @@ export default function HomePage() {
   const [statusMessage, setStatusMessage] = useState("");
   const router = useRouter();
   const { opacity, scale } = useTabAnimation();
+  
   
   useEffect(() => {
   if (!user?.uid) return;
@@ -164,71 +168,84 @@ export default function HomePage() {
     );
 
     if (dueSoon.length > 0) {
-      const soonest = dueSoon
-        .slice()
-        .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())[0];
+  const soonest = dueSoon
+    .slice()
+    .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())[0];
 
-      const dueDate = soonest.dueDate;
+  const dueDate = soonest.dueDate;
 
-      const dueDateWithTime = new Date(dueDate);
-      dueDateWithTime.setHours(12, 0, 0, 0);
-      const twoHoursBefore = new Date(dueDateWithTime.getTime() - 2 * 60 * 60 * 1000);
+  const dueDateWithTime = new Date(dueDate);
+  dueDateWithTime.setHours(12, 0, 0, 0);
 
-      const scheduledAt =
-        twoHoursBefore.getTime() > now.getTime()
-          ? twoHoursBefore
-          : new Date(now.getTime()+ 5 * 1000);
+  const twoHoursBefore = new Date(dueDateWithTime.getTime() - 2 * 60 * 60 * 1000);
 
-      const dedupeKey = `bill_reminder:${soonest.id}:${dueDateWithTime.toISOString()}`;
+  const scheduledAt =
+    twoHoursBefore.getTime() > now.getTime()
+      ? twoHoursBefore
+      : new Date(now.getTime() + 5 * 60 * 1000);
 
-      const existsSnap = await getDocs(
-        query(
-          collection(db, "users", user.uid, "notifications"),
-          where("dedupeKey", "==", dedupeKey),
-          limit(1)
-        )
+  const dedupeKey = `bill_reminder:${soonest.id}:${dueDateWithTime.toISOString()}`;
+
+  const existsSnap = await getDocs(
+    query(
+      collection(db, "users", user.uid, "notifications"),
+      where("dedupeKey", "==", dedupeKey),
+      limit(1)
+    )
+  );
+
+  if (existsSnap.empty) {
+    let expoId: string | null = null;
+
+    try {
+      const perm = await Notifications.getPermissionsAsync();
+      if (!perm.granted) {
+        const req = await Notifications.requestPermissionsAsync();
+        if (!req.granted) throw new Error("Notification permission not granted");
+      }
+
+      const seconds = Math.max(
+        5,
+        Math.floor((scheduledAt.getTime() - Date.now()) / 1000)
       );
 
-      if (existsSnap.empty) {
-        let expoId: string | undefined;
+      const trigger =
+        Platform.OS === "android"
+          ? ({ seconds, channelId: "default" } as Notifications.NotificationTriggerInput)
+          : ({ seconds } as Notifications.NotificationTriggerInput);
 
-        try {
-          const perm = await Notifications.getPermissionsAsync();
-          if (!perm.granted) {
-            const req = await Notifications.requestPermissionsAsync();
-            if (!req.granted) throw new Error("Notification permission not granted");
-          }
-
-          const seconds = Math.max(
-            5,
-            Math.floor((scheduledAt.getTime() - Date.now()) / 1000)
-          );
-
-          expoId = await Notifications.scheduleNotificationAsync({
-            content: {
-              title: "Bill reminder",
-              body: `You have ${dueSoon.length} bill(s) due soon.`,
-              sound: true,
-            },
-            trigger: { seconds, repeats: false } as any,
-          });
-        } catch {}
-
-        await addDoc(collection(db, "users", user.uid, "notifications"), {
-          type: "bill_reminder",
-          channel: expoId ? "push" : "in_app",
+      expoId = await Notifications.scheduleNotificationAsync({
+        content: {
           title: "Bill reminder",
           body: `You have ${dueSoon.length} bill(s) due soon.`,
-          dedupeKey,
-          createdAt: serverTimestamp(),
-          scheduledAt: Timestamp.fromDate(scheduledAt),
-          expoNotificationId: expoId ?? null,
-          read: false,
-          status: "active",
-          meta: { count: dueSoon.length, soonestDue: dueDate.toISOString() },
-        });
-      }
+          sound: true,
+        },
+        trigger,
+      });
+    } catch (e) {
+      console.log("Push schedule failed, saving in-app only:", e);
     }
+
+    await addDoc(collection(db, "users", user.uid, "notifications"), {
+      type: "bill_reminder",
+      channel: expoId ? "push" : "in_app",
+      title: "Bill reminder",
+      body: `You have ${dueSoon.length} bill(s) due soon.`,
+      dedupeKey,
+      createdAt: serverTimestamp(),
+      scheduledAt: Timestamp.fromDate(scheduledAt),
+      expoNotificationId: expoId,
+      read: false,
+      status: "active",
+      meta: {
+        count: dueSoon.length,
+        soonestId: soonest.id,
+        soonestDue: dueDateWithTime.toISOString(),
+      },
+    });
+  }
+}
+
   });
 
   return () => unsubscribe();
