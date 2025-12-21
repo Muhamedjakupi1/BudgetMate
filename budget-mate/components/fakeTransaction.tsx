@@ -1,4 +1,4 @@
-import { nanoid } from "nanoid";
+import "react-native-get-random-values";
 import{ Timestamp } from "firebase/firestore";
 // Tipi Transaction 
 export interface Transaction {
@@ -26,7 +26,7 @@ export const generateRandomTransactions = async (): Promise<Transaction[]> => {
       const amount = Math.floor(Math.random() * 100) + 1;
       const paymentType = paymentOptions[Math.floor(Math.random() * paymentOptions.length)];
       return {
-        id: nanoid(),
+        id: Math.random().toString(36).substring(2, 15),
         type: "expense",
         amount,
         category: "Shopping",  
